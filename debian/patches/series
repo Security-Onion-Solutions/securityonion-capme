@@ -1,0 +1,14 @@
+so-specific-changes
+find-pcap_agent-based-on-net_name-instead-of-hostname
+add-support-for-querying-Bro-conn.log-via-ELSA's-cli.pl
+initialize-$sensor
+swap-bluered-coloring-to-match-Sguil
+comment-out-"after-1000"-in-cliscript.tcl
+revert-transcript-to-tcpflow-rendering-and-add-a-separate-bro-option
+add-support-for-Snorby-timezones-and-saving-pcap-file
+add-timeout:0-to-ELSA-query
+code-cleanup
+Issue-475:-CapMe-should-check-for-active-pcap_agent
+Issue-570:-CapMe:-Ignore-extra-data-from-ELSA-cli.pl
+bump-version-to-0.9.0-and-force-TLSv1-for-all-communication
+update-capme-for-new-ELSA-API

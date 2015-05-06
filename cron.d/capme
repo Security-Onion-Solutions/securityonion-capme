@@ -1,0 +1,8 @@
+# /etc/cron.d/capme
+#
+# crontab entry to delete pcap symlinks
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+* * * * * root find /var/www/capme/pcap/*.pcap -mmin +5 -delete >/dev/null 2>&1

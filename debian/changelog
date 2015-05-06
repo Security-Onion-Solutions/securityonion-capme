@@ -1,0 +1,125 @@
+securityonion-capme (20121213-0ubuntu0securityonion21) precise; urgency=low
+
+  * update capme for new ELSA API 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 05 May 2015 11:20:17 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion20) precise; urgency=low
+
+  * bump version to 0.9.0 and force-TLSv1-for-all-communication 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sun, 05 Oct 2014 15:05:55 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion19) precise; urgency=low
+
+  * Issue 570:	CapMe: Ignore extra data from ELSA cli.pl 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 01 Aug 2014 11:03:16 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion18) precise; urgency=low
+
+  * Issue 475:	CapMe should check for active pcap_agent 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sun, 16 Feb 2014 20:52:43 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion17) precise; urgency=low
+
+  * fix postinst again 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 01 Jan 2014 00:16:45 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion16) precise; urgency=low
+
+  * fix postinst 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 01 Jan 2014 00:03:35 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion15) precise; urgency=low
+
+  * make postinst better 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 31 Dec 2013 23:47:03 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion14) precise; urgency=low
+
+  * improve postinst 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 31 Dec 2013 23:37:53 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion13) precise; urgency=low
+
+  * code cleanup and disable Apache Indexes 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 31 Dec 2013 16:20:43 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion12) precise; urgency=low
+
+  * fix permissions on /var/www/capme/pcap/ 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 19 Dec 2013 10:24:33 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion11) precise; urgency=low
+
+  * add timeout:0 to ELSA query 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 19 Dec 2013 09:44:48 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion10) precise; urgency=low
+
+  * add support for Snorby timezones and saving pcap file 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 19 Dec 2013 09:34:41 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion9) precise; urgency=low
+
+  * add postinst to ensure cliscript* are executable 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 10 Aug 2013 14:28:54 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion8) precise; urgency=low
+
+  * cliscriptbro.tcl needs to be executable 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 10 Aug 2013 13:03:14 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion7) precise; urgency=low
+
+  * revert transcript to tcpflow rendering and add a separate bro option 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 10 Aug 2013 12:26:53 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion6) precise; urgency=low
+
+  * comment out "after 1000" in cliscript.tcl 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 08 Aug 2013 21:10:52 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion5) precise; urgency=low
+
+  * swap blue/red coloring to match Sguil 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 04 Jul 2013 21:34:10 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion4) precise; urgency=low
+
+  * initialize $sensor 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 03 Jul 2013 00:07:05 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion3) precise; urgency=low
+
+  * add support for querying Bro conn.log via ELSA's cli.pl
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 02 Jul 2013 21:44:26 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion2) precise; urgency=low
+
+  * find pcap_agent based on net_name instead of hostname 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 21 Dec 2012 19:18:23 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion1) precise; urgency=low
+
+  * Initial release
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 13 Dec 2012 16:41:38 -0500

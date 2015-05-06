@@ -1,0 +1,45 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion2) precise; urgency=low
+ .
+   * find pcap_agent based on net_name instead of hostname
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -34,7 +34,7 @@ $queries = array(
+                  "sancp" => "SELECT sancp.start_time, s2.sid, s2.hostname
+                              FROM sancp
+                              LEFT JOIN sensor ON sancp.sid = sensor.sid
+-                             LEFT JOIN sensor AS s2 ON sensor.hostname = s2.hostname
++                             LEFT JOIN sensor AS s2 ON sensor.net_name = s2.hostname
+                              WHERE sancp.start_time >=  '$st' AND sancp.end_time <= '$et'
+                              AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
+                              AND s2.agent_type = 'pcap' LIMIT 1",
+@@ -42,7 +42,7 @@ $queries = array(
+                  "event" => "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
+                              FROM event
+                              LEFT JOIN sensor ON event.sid = sensor.sid
+-                             LEFT JOIN sensor AS s2 ON sensor.hostname = s2.hostname
++                             LEFT JOIN sensor AS s2 ON sensor.net_name = s2.hostname
+                              WHERE timestamp BETWEEN '$st' AND '$et'
+                              AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
+                              AND s2.agent_type = 'pcap' LIMIT 1");

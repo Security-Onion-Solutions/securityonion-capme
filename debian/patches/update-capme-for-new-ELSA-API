@@ -1,0 +1,140 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion21) precise; urgency=low
+ .
+   * update capme for new ELSA API
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -44,7 +44,7 @@ if ($sidsrc == "event") {
+ 
+ // Defaults
+ $err = 0;
+-$fmtd = $debug = $errMsg = '';
++$fmtd = $debug = $errMsg = $errMsgELSA = '';
+ 
+ /*
+ We need to determine 3 pieces of data:
+@@ -55,56 +55,55 @@ sid	- sensor id
+ 
+ $sensor = "";
+ if ($sidsrc == "elsa") {
++
+ 	/*
+ 	If ELSA is enabled, then we need to:
+-	- construct the ELSA query and submit it via cli.pl
++	- construct the ELSA query and submit it via cli.sh
+ 	- receive the response and parse out the sensor name (HOSTNAME-INTERFACE) and timestamp
+ 	- convert the timestamp to the proper format
+ 	NOTE: This requires that ELSA has access to Bro conn.log AND that the conn.log 
+ 	has been extended to include the sensor name (HOSTNAME-INTERFACE).
+ 	*/
+ 
++	// Construct the ELSA query
+ 	$elsa_query = "class=bro_conn start:'$st_unix' end:'$et_unix' +$sip +$spt +$dip +$dpt limit:1 timeout:0";
+-	$elsa_command = "perl /opt/elsa/web/cli.pl -q '$elsa_query' ";
++
++	// Submit the ELSA query via cli.sh
++	$elsa_command = "sh /opt/elsa/contrib/securityonion/contrib/cli.sh '$elsa_query' ";
+ 	$elsa_response = shell_exec($elsa_command);
+ 
+-	// A successful query response looks like this:
+-	// timestamp    class   host    program msg     fields
+-	// 1372897204   BRO_CONN        127.0.0.1       bro_conn        original_timestamp|Many|Pipe|Delimited|Fields|etc|sensorIsOffset22
+-
+-	// Explode the output into separate lines and pull out the data line
+-	$pieces = explode("\n", $elsa_response);
+-
+-	// Sometimes the response contains a warning - this means that the
+-	// expected query response data is not located on the second line.
+-	// Iterate through until we find the header line - the next
+-	// line is the data line we want. See line 35 of /opt/elsa/web/cli.pl
+-	$data_line_n = 1;
+-
+-	for ($n=0; $n<=count($pieces); $n++) {
+-		if ($pieces[$n] === "timestamp\tclass\thost\tprogram\tmsg\tfields") {
+-			$data_line_n = $n + 1;
+-			break;
+-		}
+-	}
+-
+-	$elsa_response_data = $pieces[$data_line_n];
+-
+-	// Explode the tab-delimited data line and pull out the pipe-delimited raw log
+-	$pieces = explode("\t", $elsa_response_data);
+-	$elsa_response_data_raw_log = $pieces[4];
+-
+-	// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name
+-	$pieces = explode("|", $elsa_response_data_raw_log);
+-	$elsa_response_data_raw_log_timestamp = $pieces[0];
+-	$elsa_response_data_raw_log_sensor = $pieces[22];
+-
+-	// Convert timestamp to proper format
+-	$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
+-
+-	// Clean up $sensor
+-	$sensor = rtrim($elsa_response_data_raw_log_sensor);
+-	
++	// Try to decode the response as JSON
++	$elsa_response_object = json_decode($elsa_response, true);
++
++	// Check for common error conditions
++	if (json_last_error() !== JSON_ERROR_NONE) { 
++		$errMsgELSA = "Couldn't decode JSON from ELSA API.";
++	} elseif ( $elsa_response_object["recordsReturned"] == "0") {
++		$errMsgELSA = "ELSA couldn't find this session in Bro's conn.log.";
++	} elseif ( $elsa_response_object["recordsReturned"] != "1") {
++		$errMsgELSA = "Invalid results from ELSA API.";
++	} elseif ( $elsa_response_object["results"][0]["_fields"][7]["value"] != "TCP") {
++		$errMsgELSA = "Not a TCP stream.";
++	} else { 
++
++		// Looks good so far, so let's try to parse out the sensor name and timestamp
++
++		// Pull the raw log out of the response object
++		$elsa_response_data_raw_log = $elsa_response_object["results"][0]["msg"];
++
++		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name
++		$pieces = explode("|", $elsa_response_data_raw_log);
++		$elsa_response_data_raw_log_timestamp = $pieces[0];
++		$elsa_response_data_raw_log_sensor = $pieces[22];
++
++		// Convert timestamp to proper format
++		$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
++
++		// Clean up $sensor
++		$sensor = rtrim($elsa_response_data_raw_log_sensor);
++
++	} 
++
+ 	// We now have 2 of the 3 pieces of data that we need.
+ 	// Next, we'll use $sensor to look up the $sid in Sguil's sensor table.
+ }
+@@ -142,7 +141,7 @@ if (!$response) {
+ } else if (mysql_num_rows($response) == 0) {
+     $err = 1;
+     $debug = $queries[$sidsrc];
+-    $errMsg = "Failed to find a matching sid, please try again in a few seconds";
++    $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
+     $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
+     if (mysql_num_rows($response) == 0) {
+     $errMsg = "Error: No pcap_agent found";
