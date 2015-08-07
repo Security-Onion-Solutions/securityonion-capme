@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion22) precise; urgency=low
+
+  * CapMe: Update for Bro 2.4 conn.log #793 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 07 Aug 2015 17:48:36 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion21) precise; urgency=low
 
   * update capme for new ELSA API 
