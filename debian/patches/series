@@ -13,3 +13,4 @@ Issue-570:-CapMe:-Ignore-extra-data-from-ELSA-cli.pl
 bump-version-to-0.9.0-and-force-TLSv1-for-all-communication
 update-capme-for-new-ELSA-API
 CapMe:-Update-for-Bro-2.4-conn.log-#793
+better-fix-for-#793

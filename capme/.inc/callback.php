@@ -94,7 +94,7 @@ if ($sidsrc == "elsa") {
 		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name
 		$pieces = explode("|", $elsa_response_data_raw_log);
 		$elsa_response_data_raw_log_timestamp = $pieces[0];
-		$elsa_response_data_raw_log_sensor = $pieces[23];
+		$elsa_response_data_raw_log_sensor = end($pieces);
 
 		// Convert timestamp to proper format
 		$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
