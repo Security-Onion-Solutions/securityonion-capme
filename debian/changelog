@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion25) trusty; urgency=medium
+
+  * fix postinst to reference /var/www/html/ 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 01 Oct 2015 16:41:47 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion24) trusty; urgency=medium
 
   * move to /var/www/html/ for trusty 

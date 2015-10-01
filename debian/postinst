@@ -6,11 +6,11 @@ case "$1" in
     configure)
         
 	# Set permissions
-	chmod +x /var/www/capme/.scripts/cliscript*
-	chown www-data:www-data /var/www/capme/pcap
+	chmod +x /var/www/html/capme/.scripts/cliscript*
+	chown www-data:www-data /var/www/html/capme/pcap
 
 	# If timezone.php doesn't exist, create it
-	[ -f /var/www/capme/.inc/timezone.php ] || cp /var/www/capme/.inc/timezone.php.sample /var/www/capme/.inc/timezone.php
+	[ -f /var/www/html/capme/.inc/timezone.php ] || cp /var/www/html/capme/.inc/timezone.php.sample /var/www/html/capme/.inc/timezone.php
 
 	# Disable Indexes in Apache config
 	FILE="/etc/apache2/sites-available/default-ssl"
