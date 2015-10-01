@@ -1,2 +1,2 @@
-capme var/www
+capme var/www/html
 cron.d etc
