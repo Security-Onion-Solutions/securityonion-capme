@@ -243,7 +243,7 @@ if ($err == 1) {
       	$tmpstring = rand();
 	$filename_random = str_replace(".raw", "", "$filename-$tmpstring");
 	$filename_download = "$filename_random.pcap";
-	$link = "/var/www/capme/pcap/$filename_download";
+	$link = "/var/www/so/capme/pcap/$filename_download";
 	symlink($full_filename, $link);
 	$debug .= "<br><a href=\"/capme/pcap/$filename_download\">$filename_download</a>";
 	$mytx = "<a href=\"/capme/pcap/$filename_download\">$filename_download</a><br><br>$mytx";
