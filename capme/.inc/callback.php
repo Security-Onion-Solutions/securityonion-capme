@@ -237,7 +237,7 @@ if ($err == 1) {
     // Add query to debug
     $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
 
-    // if we found the pcap, create a symlink in /var/www/capme/pcap/
+    // if we found the pcap, create a symlink in /var/www/so/capme/pcap/
     // and then create a hyperlink to that symlink
     if ($found_pcap == 1) {
       	$tmpstring = rand();
