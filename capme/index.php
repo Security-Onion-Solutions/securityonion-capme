@@ -16,12 +16,12 @@ if (isset($_REQUEST['user']))     { $usr    = $_REQUEST['user'];     $s++; }
 if (isset($_REQUEST['password'])) { $pwd    = $_REQUEST['password']; $s++; }
 // If we see a filename parameter, we know the request came from Snorby
 // and if so we can just query the event table since Snorby just has NIDS alerts
-// If the referer contains ":3154", then it's most likely a Security Onion user 
+// If the referer contains "elsa-query", then it's most likely a Security Onion user 
 // pivoting from ELSA, so we should query using ELSA.
 // If all else fails, query sancp.
 if (isset($_REQUEST['filename'])) { 
     $event = " checked";
-} elseif ( isset($_SERVER['HTTP_REFERER']) && (strpos($_SERVER['HTTP_REFERER'],":3154") !== false)) {
+} elseif ( isset($_SERVER['HTTP_REFERER']) && (strpos($_SERVER['HTTP_REFERER'],"elsa-query") !== false)) {
     $elsa  = " checked";
 } else {
     $sancp = " checked";

@@ -1,0 +1,42 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion29) trusty; urgency=medium
+ .
+   * change ELSA referer check from 3154 to elsa-query
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -16,12 +16,12 @@ if (isset($_REQUEST['user']))     { $usr
+ if (isset($_REQUEST['password'])) { $pwd    = $_REQUEST['password']; $s++; }
+ // If we see a filename parameter, we know the request came from Snorby
+ // and if so we can just query the event table since Snorby just has NIDS alerts
+-// If the referer contains ":3154", then it's most likely a Security Onion user 
++// If the referer contains "elsa-query", then it's most likely a Security Onion user 
+ // pivoting from ELSA, so we should query using ELSA.
+ // If all else fails, query sancp.
+ if (isset($_REQUEST['filename'])) { 
+     $event = " checked";
+-} elseif ( isset($_SERVER['HTTP_REFERER']) && (strpos($_SERVER['HTTP_REFERER'],":3154") !== false)) {
++} elseif ( isset($_SERVER['HTTP_REFERER']) && (strpos($_SERVER['HTTP_REFERER'],"elsa-query") !== false)) {
+     $elsa  = " checked";
+ } else {
+     $sancp = " checked";
