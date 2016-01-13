@@ -10,16 +10,121 @@ if (!isset($_REQUEST['d'])) {
 
 $d = explode("-", $d);
 
+function cleanUp($string) {
+    if (get_magic_quotes_gpc()) {
+        $string = stripslashes($string);
+    }
+    $string = mysql_real_escape_string($string);
+    return $string;
+}
+
+// If any input validation fails, return error and exit immediately
+function invalid($string) {
+	$result = array("tx"  => "",
+                  "dbg" => "",
+                  "err" => "$string");
+
+	$theJSON = json_encode($result);
+	echo $theJSON;
+	exit;
+}
+
+// Validate user input - source IP address
 $sip	= h2s($d[0]);
+if (!filter_var($sip, FILTER_VALIDATE_IP)) {
+	invalid("Invalid source IP.");
+}
+
+// Validate user input - source port
+// must be an integer between 0 and 65535
 $spt	= h2s($d[1]);
+if (filter_var($spt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+	invalid("Invalid source port.");
+}
+
+// Validate user input - destination IP address
 $dip	= h2s($d[2]);
+if (!filter_var($dip, FILTER_VALIDATE_IP)) {
+	invalid("Invalid destination IP.");
+}
+
+// Validate user input - destination port
+// must be an integer between 0 and 65535
 $dpt	= h2s($d[3]);
+if (filter_var($dpt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+	invalid("Invalid destination port.");
+}
+
+// Validate user input - start time
+// must be greater than 5 years ago and less than 5 years from today
 $st_unix= $d[4];
+if (!( ($st_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($st_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+	invalid("Invalid start time.");
+}
+
+// Validate user input - end time
+// must be greater than 5 years ago and less than 5 years from today
 $et_unix= $d[5];
-$usr	= h2s($d[6]);
+if (!( ($et_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($et_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+	invalid("Invalid end time.");
+}
+
+// Validate user input - username
+// Username must be alphanumeric
+$usr	= cleanUp(h2s($d[6]));
+if (!(ctype_alnum($usr))) {
+	invalid("The user name or password is incorrect.");
+}
+
+// Validate user input - password
 $pwd	= h2s($d[7]);
+include '.inc/config.php';
+$username = $password = $err = '';
+
+$db = mysql_connect($dbHost,$dbUser,$dbPass);
+$link = mysql_select_db($dbName, $db);
+if ($link) {
+        $query = "SELECT * FROM user_info WHERE username = '$usr'";
+        $result = mysql_query($query);
+        $numRows = mysql_num_rows($result);
+
+        if ($numRows > 0) {
+            while ($row = mysql_fetch_row($result)) {
+                $userHash       = $row[3];
+            }
+            // The first 2 chars are the salt     
+            $theSalt = substr($userHash, 0,2);
+
+            // The remainder is the hash
+            $theHash = substr($userHash, 2);
+
+            // Now we hash the users input                 
+            $testHash = sha1($pwd . $theSalt);
+
+            // Does it match? If not, exit.
+            if ($testHash !== $theHash) {
+                invalid("The user name or password is incorrect.");
+            }
+        } else {
+            invalid("The user name or password is incorrect.");
+        }
+} else {
+        invalid("Connection Failed.");
+}
+
+// Validate user input - sidsrc
+// valid values are: sancp, event, and elsa
 $sidsrc = h2s($d[8]);
+if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
+	invalid("Invalid sidsrc.");
+}
+
+// Validate user input - xscript
+// valid values are: tcpflow, bro, and pcap
 $xscript = h2s($d[9]);
+if (!( $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
+	invalid("Invalid xscript.");
+}
 
 // Format timestamps
 $st = date("Y-m-d H:i:s", $st_unix);

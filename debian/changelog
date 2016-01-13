@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion30) trusty; urgency=medium
+
+  * add input validation 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 13 Jan 2016 08:30:17 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion29) trusty; urgency=medium
 
   * change ELSA referer check from 3154 to elsa-query 
