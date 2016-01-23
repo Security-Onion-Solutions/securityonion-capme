@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion31) trusty; urgency=medium
+
+  * Issue 840: securityonion-capme: remove include config from callback 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 23 Jan 2016 16:55:09 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion30) trusty; urgency=medium
 
   * add input validation 

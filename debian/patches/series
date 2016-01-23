@@ -18,3 +18,4 @@ symlink-using-new-location-of-varwwwso
 update-cron-job-to-remove-old-pcaps-from-varwwwso
 change-ELSA-referer-check-from-3154-to-elsa-query
 add-input-validation
+Issue-840:-securityonion-capme:-remove-include-config-from-callback

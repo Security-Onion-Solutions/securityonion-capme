@@ -78,7 +78,6 @@ if (!(ctype_alnum($usr))) {
 
 // Validate user input - password
 $pwd	= h2s($d[7]);
-include '.inc/config.php';
 $username = $password = $err = '';
 
 $db = mysql_connect($dbHost,$dbUser,$dbPass);
