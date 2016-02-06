@@ -18,7 +18,7 @@ $(document).ready(function(){
     numArgs = parseInt($("#formargs").val());
     gotUsr  = $("#username").val().length;
     gotPwd  = $("#password").val().length;
-    
+
     if (numArgs == 8) {
         reqCap("posted");
     }
@@ -31,10 +31,39 @@ $(document).ready(function(){
             $("#password").focus();
         } else {
             $("#password").focus();
-        }    
+        }
     }
- 
+
     $(".capme_submit").click(function() {
+
+        //Get start time value
+        var stimeConvert = document.getElementById("stime").value;
+        var stimeSyntax = ":";
+
+        //If start time value contains stimeSyntax, then convert date to epoch timestamp.
+        if (stimeConvert.indexOf(stimeSyntax) >=0) {
+
+            var d = new Date(stimeConvert);
+            var tz = (d.getTimezoneOffset());
+            var stimeConverted = d.setTime( d.getTime()/1000-(tz*60) );
+
+            document.getElementById("stime").value = stimeConverted;
+        }
+
+        //Get end time value
+        var etimeConvert = document.getElementById("etime").value;
+        var etimeSyntax = ":";
+
+        //If end time value contains etimeSyntax, then convert date to epoch timestamp.
+        if (etimeConvert.indexOf(etimeSyntax) >=0) {
+
+            var d2 = new Date(etimeConvert);
+            var tz2 = (d2.getTimezoneOffset());
+            var etimeConverted = d2.setTime( d2.getTime()/1000-(tz2*60) );
+
+            document.getElementById("etime").value = etimeConverted;
+        }
+
        frmArgs = $('input[value!=""]').length;
        if (frmArgs == 15) {
             reqCap("usefrm");
