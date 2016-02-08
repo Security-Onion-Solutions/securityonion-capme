@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion32) trusty; urgency=medium
+
+  * securityonion-capme needs additional input validation in index.php #856 
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 08 Feb 2016 10:53:56 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion31) trusty; urgency=medium
 
   * Issue 840: securityonion-capme: remove include config from callback 
