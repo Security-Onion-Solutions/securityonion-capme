@@ -34,32 +34,80 @@ $(document).ready(function(){
         }
     }
 
+    //Toggle start time between epoch and date/time
+    $("#start_toggle").toggle(
+
+        function() {
+
+		//Get value of start time from input and convert it to human-readable date/time
+                var stimeVal = document.getElementById("stime").value;
+                var stime_to_ISO = new Date(stimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
+
+                document.getElementById("stime").value = stime_to_ISO;
+        },
+
+        function() {
+
+                //Get start time and convert it to epoch timestamp
+                var stimeVal = document.getElementById("stime").value;
+                var startDate = new Date(stimeVal);
+                var start_tz_offset = (startDate.getTimezoneOffset());
+                var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
+
+                document.getElementById("stime").value = stimeConverted;
+        }
+    );
+
+    //Toggle end time between epoch and date/time
+    $("#end_toggle").toggle(
+
+        function() {
+
+                //Get value of end time from input  and convert it to human-readable date/time
+                var etimeVal = document.getElementById("etime").value;
+                var etime_to_ISO = new Date(etimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
+
+                document.getElementById("etime").value = etime_to_ISO;
+        },
+
+        function() {
+
+                //Get end time value and convert it to epoch timestamp
+                var etimeVal = document.getElementById("etime").value;
+                var endDate = new Date(etimeVal);
+                var end_tz_offset = (endDate.getTimezoneOffset());
+                var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
+
+                document.getElementById("etime").value = etimeConverted;
+       }
+    );
+
     $(".capme_submit").click(function() {
 
         //Get start time value
-        var stimeConvert = document.getElementById("stime").value;
+        var stimeVal = document.getElementById("stime").value;
         var stimeSyntax = ":";
 
         //If start time value contains stimeSyntax, then convert date to epoch timestamp.
-        if (stimeConvert.indexOf(stimeSyntax) >=0) {
+        if (stimeVal.indexOf(stimeSyntax) >=0) {
 
-            var d = new Date(stimeConvert);
-            var tz = (d.getTimezoneOffset());
-            var stimeConverted = d.setTime( d.getTime()/1000-(tz*60) );
+            var startDate = new Date(stimeVal);
+            var start_tz_offset = (startDate.getTimezoneOffset());
+            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
 
             document.getElementById("stime").value = stimeConverted;
         }
 
         //Get end time value
-        var etimeConvert = document.getElementById("etime").value;
+        var etimeVal = document.getElementById("etime").value;
         var etimeSyntax = ":";
 
         //If end time value contains etimeSyntax, then convert date to epoch timestamp.
-        if (etimeConvert.indexOf(etimeSyntax) >=0) {
+        if (etimeVal.indexOf(etimeSyntax) >=0) {
 
-            var d2 = new Date(etimeConvert);
-            var tz2 = (d2.getTimezoneOffset());
-            var etimeConverted = d2.setTime( d2.getTime()/1000-(tz2*60) );
+            var endDate = new Date(etimeVal);
+            var end_tz_offset = (endDate.getTimezoneOffset());
+            var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
 
             document.getElementById("etime").value = etimeConverted;
         }
