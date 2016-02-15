@@ -18,7 +18,7 @@ $(document).ready(function(){
     numArgs = parseInt($("#formargs").val());
     gotUsr  = $("#username").val().length;
     gotPwd  = $("#password").val().length;
-    
+
     if (numArgs == 8) {
         reqCap("posted");
     }
@@ -31,12 +31,96 @@ $(document).ready(function(){
             $("#password").focus();
         } else {
             $("#password").focus();
-        }    
+        }
     }
- 
+
+    //Set tooltip for checkboxes
+    $("#stime_checkbox").attr("title", "Convert to date/time format");
+    $("#etime_checkbox").attr("title", "Convert to date/time format");
+
+
+    //Create toggle for start time checkbox
+    $("#stime_checkbox").click(function() {
+
+	if ($("#stime_checkbox").prop("checked")){
+
+            //Get value of start time from input and convert it to human-readable date/time
+            var stimeVal = document.getElementById("stime").value;
+            var stime_to_ISO = new Date(stimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
+
+            document.getElementById("stime").value = stime_to_ISO;
+	    $("#stime_checkbox").attr("title", "Convert to epoch format");
+	}
+	else{
+
+            //Get start time and convert it to epoch timestamp
+            var stimeVal = document.getElementById("stime").value;
+            var startDate = new Date(stimeVal);
+            var start_tz_offset = (startDate.getTimezoneOffset());
+            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
+
+            document.getElementById("stime").value = stimeConverted;
+            $("#stime_checkbox").attr("title", "Convert to date/time format");
+        }
+    });
+
+    //Create toggle for end time checkbox
+    $("#etime_checkbox").click(function() {
+
+	if ($("#etime_checkbox").prop("checked")){
+
+	    //Get value of start time from input and convert it to human-readable date/time
+            var stimeVal = document.getElementById("etime").value;
+            var stime_to_ISO = new Date(stimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
+
+            document.getElementById("etime").value = stime_to_ISO;
+            $("#etime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+
+	    //Get start time and convert it to epoch timestamp
+            var stimeVal = document.getElementById("etime").value;
+            var startDate = new Date(stimeVal);
+            var start_tz_offset = (startDate.getTimezoneOffset());
+            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
+
+	    document.getElementById("etime").value = stimeConverted;
+                $("#etime_checkbox").attr("title", "Convert to date/time format");
+        }
+    });
+
     $(".capme_submit").click(function() {
+
+        //Get start time value
+        var stimeVal = document.getElementById("stime").value;
+        var stimeSyntax = ":";
+
+        //If start time value contains stimeSyntax, then convert date to epoch timestamp.
+        if (stimeVal.indexOf(stimeSyntax) >=0) {
+
+            var startDate = new Date(stimeVal);
+            var start_tz_offset = (startDate.getTimezoneOffset());
+            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
+
+            document.getElementById("stime").value = stimeConverted;
+        }
+
+        //Get end time value
+        var etimeVal = document.getElementById("etime").value;
+        var etimeSyntax = ":";
+
+        //If end time value contains etimeSyntax, then convert date to epoch timestamp.
+        if (etimeVal.indexOf(etimeSyntax) >=0) {
+
+            var endDate = new Date(etimeVal);
+            var end_tz_offset = (endDate.getTimezoneOffset());
+            var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
+
+            document.getElementById("etime").value = etimeConverted;
+        }
+
        frmArgs = $('input[value!=""]').length;
-       if (frmArgs == 15) {
+       if (frmArgs == 17) {
             reqCap("usefrm");
         } else {
             theMsg("Please complete all form fields");
