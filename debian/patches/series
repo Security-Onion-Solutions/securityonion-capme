@@ -20,3 +20,4 @@ change-ELSA-referer-check-from-3154-to-elsa-query
 add-input-validation
 Issue-840:-securityonion-capme:-remove-include-config-from-callback
 securityonion-capme-needs-additional-input-validation-in-index.php-#856
+PR-#11-securityonion-capme:-merge-timestamp-changes-from-Wes-Lambert-#862

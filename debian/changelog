@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion33) trusty; urgency=medium
+
+  * PR #11 securityonion-capme: merge timestamp changes from Wes Lambert #862 
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 15 Feb 2016 14:13:47 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion32) trusty; urgency=medium
 
   * securityonion-capme needs additional input validation in index.php #856 
