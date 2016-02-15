@@ -85,7 +85,7 @@ $(document).ready(function(){
             var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
 
 	    document.getElementById("etime").value = stimeConverted;
-                $("#etime_checkbox").attr("title", "Convert to epoch format");
+                $("#etime_checkbox").attr("title", "Convert to date/time format");
         }
     });
 
