@@ -44,9 +44,11 @@ $(document).ready(function(){
     var stimeSyntax = "-";
         if (stimeVal.indexOf(stimeSyntax) >=0){
 	    $("#stime_checkbox").prop('checked', true);
+            $("#stime_checkbox").attr("title", "Convert to epoch format");
         }
 	else{
 	    $("#stime_checkbox").prop('checked', false);
+            $("#stime_checkbox").attr("title", "Convert to date/time format");
 	}
     });
 
@@ -55,9 +57,11 @@ $(document).ready(function(){
     var etimeSyntax = "-";
         if (etimeVal.indexOf(etimeSyntax) >=0){
             $("#etime_checkbox").prop('checked', true);
+            $("#etime_checkbox").attr("title", "Convert to epoch format");
         }
 	else{
 	    $("#etime_checkbox").prop('checked', false);
+            $("#etime_checkbox").attr("title", "Convert to date/time format");
 	}
     });
 
