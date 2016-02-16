@@ -168,13 +168,13 @@ capME!
 
 <tr>
 <td class=capme_left>Start Time:</td>
-<td class=capme_right><input type=text maxlength=19 id=stime class=capme_selb value="<?php echo $stime;?>" />
+<td class=capme_right><input type=text maxlength=19 id=stime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $stime;?>" />
 <input type=checkbox id=stime_checkbox /></td>
 </tr>
 
 <tr>
 <td class=capme_left>End Time:</td>
-<td class=capme_right><input type=text maxlength=19 id=etime class=capme_selb value="<?php echo $etime;?>" />
+<td class=capme_right><input type=text maxlength=19 id=etime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $etime;?>" />
 <input type=checkbox id=etime_checkbox /></td>
 </tr>
 

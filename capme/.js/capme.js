@@ -38,6 +38,32 @@ $(document).ready(function(){
     $("#stime_checkbox").attr("title", "Convert to date/time format");
     $("#etime_checkbox").attr("title", "Convert to date/time format");
 
+    //Set checkbox value based on user input
+    $("#stime").blur(function() {
+    var stimeVal = document.getElementById("stime").value;
+    var stimeSyntax = "-";
+        if (stimeVal.indexOf(stimeSyntax) >=0){
+	    $("#stime_checkbox").prop('checked', true);
+            $("#stime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+	    $("#stime_checkbox").prop('checked', false);
+            $("#stime_checkbox").attr("title", "Convert to date/time format");
+	}
+    });
+
+    $("#etime").blur(function() {
+    var etimeVal = document.getElementById("etime").value;
+    var etimeSyntax = "-";
+        if (etimeVal.indexOf(etimeSyntax) >=0){
+            $("#etime_checkbox").prop('checked', true);
+            $("#etime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+	    $("#etime_checkbox").prop('checked', false);
+            $("#etime_checkbox").attr("title", "Convert to date/time format");
+	}
+    });
 
     //Create toggle for start time checkbox
     $("#stime_checkbox").click(function() {
