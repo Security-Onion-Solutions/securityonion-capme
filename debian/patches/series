@@ -21,3 +21,4 @@ add-input-validation
 Issue-840:-securityonion-capme:-remove-include-config-from-callback
 securityonion-capme-needs-additional-input-validation-in-index.php-#856
 PR-#11-securityonion-capme:-merge-timestamp-changes-from-Wes-Lambert-#862
+Add-default-datetime-text-for-search-and-fix-checkbox-state-issue.-#12

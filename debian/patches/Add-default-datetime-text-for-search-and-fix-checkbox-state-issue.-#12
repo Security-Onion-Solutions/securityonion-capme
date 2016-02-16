@@ -1,0 +1,78 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion34) trusty; urgency=medium
+ .
+   * Add default date/time text for search and fix checkbox state issue. #12
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.js/capme.js
++++ securityonion-capme-20121213/capme/.js/capme.js
+@@ -38,6 +38,32 @@ $(document).ready(function(){
+     $("#stime_checkbox").attr("title", "Convert to date/time format");
+     $("#etime_checkbox").attr("title", "Convert to date/time format");
+ 
++    //Set checkbox value based on user input
++    $("#stime").blur(function() {
++    var stimeVal = document.getElementById("stime").value;
++    var stimeSyntax = "-";
++        if (stimeVal.indexOf(stimeSyntax) >=0){
++	    $("#stime_checkbox").prop('checked', true);
++            $("#stime_checkbox").attr("title", "Convert to epoch format");
++        }
++	else{
++	    $("#stime_checkbox").prop('checked', false);
++            $("#stime_checkbox").attr("title", "Convert to date/time format");
++	}
++    });
++
++    $("#etime").blur(function() {
++    var etimeVal = document.getElementById("etime").value;
++    var etimeSyntax = "-";
++        if (etimeVal.indexOf(etimeSyntax) >=0){
++            $("#etime_checkbox").prop('checked', true);
++            $("#etime_checkbox").attr("title", "Convert to epoch format");
++        }
++	else{
++	    $("#etime_checkbox").prop('checked', false);
++            $("#etime_checkbox").attr("title", "Convert to date/time format");
++	}
++    });
+ 
+     //Create toggle for start time checkbox
+     $("#stime_checkbox").click(function() {
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -168,13 +168,13 @@ capME!
+ 
+ <tr>
+ <td class=capme_left>Start Time:</td>
+-<td class=capme_right><input type=text maxlength=19 id=stime class=capme_selb value="<?php echo $stime;?>" />
++<td class=capme_right><input type=text maxlength=19 id=stime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $stime;?>" />
+ <input type=checkbox id=stime_checkbox /></td>
+ </tr>
+ 
+ <tr>
+ <td class=capme_left>End Time:</td>
+-<td class=capme_right><input type=text maxlength=19 id=etime class=capme_selb value="<?php echo $etime;?>" />
++<td class=capme_right><input type=text maxlength=19 id=etime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $etime;?>" />
+ <input type=checkbox id=etime_checkbox /></td>
+ </tr>
+ 
