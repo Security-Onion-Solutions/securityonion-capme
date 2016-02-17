@@ -11,8 +11,100 @@ $(document).ready(function(){
 
     var loaderImg = "<img id=loader class=loader src=\".css/load.gif\">";
     var err = 0;
+    var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
     $(".capme_body").fadeIn('slow');
+
+    //Check if browser is Chrome/Chromium-based.  If so, hide checkboxes and placeholders.
+    if (!(is_chrome)){
+       $("#stime_checkbox").hide();
+       $("#etime_checkbox").hide();
+       $("#stime").attr('placeholder', '');
+       $("#etime").attr('placeholder', '');
+    }
+
+    //Set tooltip for checkboxes
+    $("#stime_checkbox").attr("title", "Convert to date/time format");
+    $("#etime_checkbox").attr("title", "Convert to date/time format");
+
+    //Set checkbox value based on user input
+    //When we lose focus of start time input, set checkbox value
+    $("#stime").blur(function() {
+
+    var stimeBlur = $("#stime").val();
+    var stimeFmt = "-";
+
+        if (stimeBlur.indexOf(stimeFmt) >=0){
+	    $("#stime_checkbox").prop('checked', true);
+            $("#stime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+	    $("#stime_checkbox").prop('checked', false);
+            $("#stime_checkbox").attr("title", "Convert to date/time format");
+	}
+    });
+
+    //When we lose focus of end time input, set checkbox value
+    $("#etime").blur(function() {
+
+    var etimeBlur = $("#etime").val();
+    var etimeFmt = "-";
+
+	if (etimeBlur.indexOf(etimeFmt) >=0){
+            $("#etime_checkbox").prop('checked', true);
+            $("#etime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+	    $("#etime_checkbox").prop('checked', false);
+            $("#etime_checkbox").attr("title", "Convert to date/time format");
+	}
+    });
+
+    //Create toggle for start time checkbox
+    $("#stime_checkbox").click(function() {
+
+	if ($("#stime_checkbox").prop("checked")){
+            //Get value of start time from input and convert it to human-readable date/time
+            var stimeChkd = $("#stime").val();
+            var stime_to_ISO = new Date(stimeChkd*1000).toISOString().slice(0,-5).replace('T',' ');
+
+            $("#stime").val(stime_to_ISO);
+	    $("#stime_checkbox").attr("title", "Convert to epoch format");
+	}
+	else{
+            //Get start time and convert it to epoch timestamp
+            var stimeUnChkd = $("#stime").val();
+            var startDate = new Date(stimeUnChkd);
+            var start_tz_offset = (startDate.getTimezoneOffset());
+            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
+
+            $("#stime").val(stimeConverted);
+            $("#stime_checkbox").attr("title", "Convert to date/time format");
+        }
+    });
+
+    //Create toggle for end time checkbox
+    $("#etime_checkbox").click(function() {
+
+	if ($("#etime_checkbox").prop("checked")){
+	    //Get value of start time from input and convert it to human-readable date/time
+            var etimeChkd = $("#etime").val();
+            var etime_to_ISO = new Date(etimeChkd*1000).toISOString().slice(0,-5).replace('T',' ');
+
+            $("#etime").val(etime_to_ISO);
+            $("#etime_checkbox").attr("title", "Convert to epoch format");
+        }
+	else{
+	    //Get start time and convert it to epoch timestamp
+            var etimeUnChkd = $("#etime").val();
+            var endDate = new Date(etimeUnChkd);
+            var end_tz_offset = (endDate.getTimezoneOffset());
+            var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
+
+	    $("#etime").val(etimeConverted);
+            $("#etime_checkbox").attr("title", "Convert to date/time format");
+        }
+    });
 
     // We will fire if we have enough arguments otherwise we wait for a submit
     numArgs = parseInt($("#formargs").val());
@@ -34,116 +126,37 @@ $(document).ready(function(){
         }
     }
 
-    //Set tooltip for checkboxes
-    $("#stime_checkbox").attr("title", "Convert to date/time format");
-    $("#etime_checkbox").attr("title", "Convert to date/time format");
-
-    //Set checkbox value based on user input
-    $("#stime").blur(function() {
-    var stimeVal = document.getElementById("stime").value;
-    var stimeSyntax = "-";
-        if (stimeVal.indexOf(stimeSyntax) >=0){
-	    $("#stime_checkbox").prop('checked', true);
-            $("#stime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-	    $("#stime_checkbox").prop('checked', false);
-            $("#stime_checkbox").attr("title", "Convert to date/time format");
-	}
-    });
-
-    $("#etime").blur(function() {
-    var etimeVal = document.getElementById("etime").value;
-    var etimeSyntax = "-";
-        if (etimeVal.indexOf(etimeSyntax) >=0){
-            $("#etime_checkbox").prop('checked', true);
-            $("#etime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-	    $("#etime_checkbox").prop('checked', false);
-            $("#etime_checkbox").attr("title", "Convert to date/time format");
-	}
-    });
-
-    //Create toggle for start time checkbox
-    $("#stime_checkbox").click(function() {
-
-	if ($("#stime_checkbox").prop("checked")){
-
-            //Get value of start time from input and convert it to human-readable date/time
-            var stimeVal = document.getElementById("stime").value;
-            var stime_to_ISO = new Date(stimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
-
-            document.getElementById("stime").value = stime_to_ISO;
-	    $("#stime_checkbox").attr("title", "Convert to epoch format");
-	}
-	else{
-
-            //Get start time and convert it to epoch timestamp
-            var stimeVal = document.getElementById("stime").value;
-            var startDate = new Date(stimeVal);
-            var start_tz_offset = (startDate.getTimezoneOffset());
-            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
-
-            document.getElementById("stime").value = stimeConverted;
-            $("#stime_checkbox").attr("title", "Convert to date/time format");
-        }
-    });
-
-    //Create toggle for end time checkbox
-    $("#etime_checkbox").click(function() {
-
-	if ($("#etime_checkbox").prop("checked")){
-
-	    //Get value of start time from input and convert it to human-readable date/time
-            var stimeVal = document.getElementById("etime").value;
-            var stime_to_ISO = new Date(stimeVal*1000).toISOString().slice(0,-5).replace('T',' ');
-
-            document.getElementById("etime").value = stime_to_ISO;
-            $("#etime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-
-	    //Get start time and convert it to epoch timestamp
-            var stimeVal = document.getElementById("etime").value;
-            var startDate = new Date(stimeVal);
-            var start_tz_offset = (startDate.getTimezoneOffset());
-            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
-
-	    document.getElementById("etime").value = stimeConverted;
-                $("#etime_checkbox").attr("title", "Convert to date/time format");
-        }
-    });
-
+    //Submit form
     $(".capme_submit").click(function() {
 
+	$("#stime_checkbox").prop('checked', false);
+        $("#etime_checkbox").prop('checked', false);
+
         //Get start time value
-        var stimeVal = document.getElementById("stime").value;
+        var stime = $("#stime").val();
         var stimeSyntax = ":";
 
         //If start time value contains stimeSyntax, then convert date to epoch timestamp.
-        if (stimeVal.indexOf(stimeSyntax) >=0) {
-
-            var startDate = new Date(stimeVal);
+        if (stime.indexOf(stimeSyntax) >=0) {
+	    var startDate = new Date(stime);
             var start_tz_offset = (startDate.getTimezoneOffset());
             var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
 
-            document.getElementById("stime").value = stimeConverted;
+            $("#stime").val(stimeConverted);
         }
 
         //Get end time value
-        var etimeVal = document.getElementById("etime").value;
+        var etime = $("#etime").val();
         var etimeSyntax = ":";
 
         //If end time value contains etimeSyntax, then convert date to epoch timestamp.
-        if (etimeVal.indexOf(etimeSyntax) >=0) {
-
-            var endDate = new Date(etimeVal);
+        if (etime.indexOf(etimeSyntax) >=0) {
+	    var endDate = new Date(etime);
             var end_tz_offset = (endDate.getTimezoneOffset());
             var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
 
-            document.getElementById("etime").value = etimeConverted;
-        }
+	    $("#etime").val(etimeConverted);
+	}
 
        frmArgs = $('input[value!=""]').length;
        if (frmArgs == 17) {
@@ -303,7 +316,6 @@ $(document).ready(function(){
             n++;
             var unixTime = parseInt(stamp)
         }
-
         if (n == 0) {
             theMsg("Error: Bad Timestamp");
             bON('.capme_submit');
