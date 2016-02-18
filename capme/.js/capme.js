@@ -11,11 +11,11 @@ $(document).ready(function(){
 
     var loaderImg = "<img id=loader class=loader src=\".css/load.gif\">";
     var err = 0;
-    var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
-
+    
     $(".capme_body").fadeIn('slow');
 
     //Check if browser is Chrome/Chromium-based.  If so, hide checkboxes and placeholders.
+    var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
     if (!(is_chrome)){
        $("#stime_checkbox").hide();
        $("#etime_checkbox").hide();
