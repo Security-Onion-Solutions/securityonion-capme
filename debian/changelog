@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion35) trusty; urgency=medium
+
+  * package PR #13 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 18 Feb 2016 06:03:52 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion34) trusty; urgency=medium
 
   * Add default date/time text for search and fix checkbox state issue. #12 
