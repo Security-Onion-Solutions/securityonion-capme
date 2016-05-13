@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion36) trusty; urgency=medium
+
+  * Issue 736: CapMe: Debug information occasionally gets rendered inside the transcript 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 13 May 2016 13:52:16 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion35) trusty; urgency=medium
 
   * package PR #13 
