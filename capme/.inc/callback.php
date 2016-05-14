@@ -274,10 +274,33 @@ if ($err == 1) {
     }
     $cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
 
-    // The first time the pcap is requested, there is a race condition where DEBUG output may be inconsistent.
-    // The second time the pcap is requested, the pcap is cached by sguild and DEBUG output is consistent.
+    // Request pcap/transcript.
     exec("../.scripts/$cmd",$raw);
+
+    // If user requested the standard tcpflow transcript, check output
+    // for signs of gzip encoding.  If found, resubmit using Bro.
+    $foundgzip=0;
+    if ($xscript == "tcpflow") {
+	foreach ($raw as $line) {
+		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
+			$foundgzip=1;
+		}
+	}
+    }
+
+    // Initialize $raw before requesting pcap again.
     $raw="";
+
+    // If we found gzip encoding, then request Bro transcript.
+    if ($foundgzip==1) {
+	$script = "cliscriptbro.tcl";
+	$cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
+	$fmtd .= "<span class=txtext_hdr>CAPME: Detected gzip encoding.</span>";
+	$fmtd .= "<span class=txtext_hdr>CAPME: Automatically switched to Bro transcript.</span>";
+    }
+
+    // Request pcap/transcript.
+    // Always request pcap a second time to ensure consistent DEBUG output.
     exec("../.scripts/$cmd",$raw);
 
     // To handle large pcaps more gracefully, we now only render 1000 lines of output by default.
@@ -307,11 +330,11 @@ if ($err == 1) {
 
     // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
     if ($outputlines >= $maxoutputlines) {
-	$fmtd .= "===========================================================<br>";
-	$fmtd .= "CAPME: Only showing the first $maxoutputlines lines.<br>";
-	$fmtd .= "CAPME: This pcap has a total of $outputlines lines.<br>";
+	$fmtd .= "=================================================================<br>";
+	$fmtd .= "CAPME: Only showing the first $maxoutputlines lines of transcript output.<br>";
+	$fmtd .= "CAPME: This transcript has a total of $outputlines lines.<br>";
 	$fmtd .= "CAPME: To see the entire stream, you can download the pcap using the link below.<br>";
-	$fmtd .= "===========================================================<br>";
+	$fmtd .= "=================================================================<br>";
     }
 
     // default to sending transcript

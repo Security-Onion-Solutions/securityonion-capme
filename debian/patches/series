@@ -26,3 +26,4 @@ package-PR-#13
 -Issue-736:-CapMe:-Debug-information-occasionally-gets-rendered-inside-the-transcript
 previous-fix-didn't-work,-try-pingpong
 issues-736-and-738
+Issue-916:-CapMe:-Check-for-gzip-encoding-and-automatically-switch-to-Bro-transcript
