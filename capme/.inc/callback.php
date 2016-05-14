@@ -274,8 +274,17 @@ if ($err == 1) {
     }
     $cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
 
+    // The first time the pcap is requested, there is a race condition where DEBUG output may be inconsistent.
+    // The second time the pcap is requested, the pcap is cached by sguild and DEBUG output is consistent.
+    exec("../.scripts/$cmd",$raw);
+    $raw="";
     exec("../.scripts/$cmd",$raw);
 
+    // To handle large pcaps more gracefully, we now only render 1000 lines of output by default.
+    $outputlines=0;
+    $maxoutputlines=1000;
+
+    // Iterate through all lines and format as necessary
     foreach ($raw as $line) {
 
         $line = htmlspecialchars($line);
@@ -288,20 +297,29 @@ if ($err == 1) {
             case "SRC": $line = preg_replace('/^SRC:.*$/', "<span class=txtext_src>$0</span>", $line); break;
         }
 
+	$outputlines++;
         if (strlen($line) > 0) {
-            $fmtd  .= $line . "<br>";
+		if ($outputlines < $maxoutputlines) {
+	            $fmtd  .= $line . "<br>";
+		}
         }
+    }
+
+    // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
+    if ($outputlines >= $maxoutputlines) {
+	$fmtd .= "===========================================================<br>";
+	$fmtd .= "CAPME: Only showing the first $maxoutputlines lines.<br>";
+	$fmtd .= "CAPME: This pcap has a total of $outputlines lines.<br>";
+	$fmtd .= "CAPME: To see the entire stream, you can download the pcap using the link below.<br>";
+	$fmtd .= "===========================================================<br>";
     }
 
     // default to sending transcript
     $mytx = $fmtd;
 
     /*
-    $debug EITHER looks like this:
 
-    DEBUG: Using archived data: /nsm/server_data/securityonion/archive/2013-11-08/doug-virtual-machine-eth1/10.0.2.15:1066_192.168.56.50:80-6.raw
-
-    OR it looks like this:
+    On the first pcap request, $debug would have looked like this (although it may have been split up and mislabeled):
 
     DEBUG: Raw data request sent to doug-virtual-machine-eth1.
     DEBUG: Making a list of local log files.
@@ -311,6 +329,11 @@ if ($err == 1) {
     DEBUG: 1383910121
     DEBUG: Creating unique data file: /usr/sbin/tcpdump -r /nsm/sensor_data/doug-virtual-machine-eth1/dailylogs/2013-11-08/snort.log.1383910121 -w /tmp/10.0.2.15:1066_192.168.56.50:80-6.raw (ip and host 10.0.2.15 and host 192.168.56.50 and port 1066 and port 80 and proto 6) or (vlan and host 10.0.2.15 and host 192.168.56.50 and port 1066 and port 80 and proto 6)
     DEBUG: Receiving raw file from sensor.
+
+    Since we now request the pcap twice, $debug SHOULD look like this:
+
+    DEBUG: Using archived data: /nsm/server_data/securityonion/archive/2013-11-08/doug-virtual-machine-eth1/10.0.2.15:1066_192.168.56.50:80-6.raw
+
     */
 
     // Find pcap

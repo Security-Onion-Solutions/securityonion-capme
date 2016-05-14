@@ -1,0 +1,132 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion38) trusty; urgency=medium
+ .
+   * issues 736 and 738
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -274,8 +274,17 @@ if ($err == 1) {
+     }
+     $cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
+ 
++    // The first time the pcap is requested, there is a race condition where DEBUG output may be inconsistent.
++    // The second time the pcap is requested, the pcap is cached by sguild and DEBUG output is consistent.
+     exec("../.scripts/$cmd",$raw);
++    $raw="";
++    exec("../.scripts/$cmd",$raw);
++
++    // To handle large pcaps more gracefully, we now only render 1000 lines of output by default.
++    $outputlines=0;
++    $maxoutputlines=1000;
+ 
++    // Iterate through all lines and format as necessary
+     foreach ($raw as $line) {
+ 
+         $line = htmlspecialchars($line);
+@@ -288,20 +297,29 @@ if ($err == 1) {
+             case "SRC": $line = preg_replace('/^SRC:.*$/', "<span class=txtext_src>$0</span>", $line); break;
+         }
+ 
++	$outputlines++;
+         if (strlen($line) > 0) {
+-            $fmtd  .= $line . "<br>";
++		if ($outputlines < $maxoutputlines) {
++	            $fmtd  .= $line . "<br>";
++		}
+         }
+     }
+ 
++    // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
++    if ($outputlines >= $maxoutputlines) {
++	$fmtd .= "===========================================================<br>";
++	$fmtd .= "CAPME: Only showing the first $maxoutputlines lines.<br>";
++	$fmtd .= "CAPME: This pcap has a total of $outputlines lines.<br>";
++	$fmtd .= "CAPME: To see the entire stream, you can download the pcap using the link below.<br>";
++	$fmtd .= "===========================================================<br>";
++    }
++
+     // default to sending transcript
+     $mytx = $fmtd;
+ 
+     /*
+-    $debug EITHER looks like this:
+-
+-    DEBUG: Using archived data: /nsm/server_data/securityonion/archive/2013-11-08/doug-virtual-machine-eth1/10.0.2.15:1066_192.168.56.50:80-6.raw
+ 
+-    OR it looks like this:
++    On the first pcap request, $debug would have looked like this (although it may have been split up and mislabeled):
+ 
+     DEBUG: Raw data request sent to doug-virtual-machine-eth1.
+     DEBUG: Making a list of local log files.
+@@ -311,6 +329,11 @@ if ($err == 1) {
+     DEBUG: 1383910121
+     DEBUG: Creating unique data file: /usr/sbin/tcpdump -r /nsm/sensor_data/doug-virtual-machine-eth1/dailylogs/2013-11-08/snort.log.1383910121 -w /tmp/10.0.2.15:1066_192.168.56.50:80-6.raw (ip and host 10.0.2.15 and host 192.168.56.50 and port 1066 and port 80 and proto 6) or (vlan and host 10.0.2.15 and host 192.168.56.50 and port 1066 and port 80 and proto 6)
+     DEBUG: Receiving raw file from sensor.
++
++    Since we now request the pcap twice, $debug SHOULD look like this:
++
++    DEBUG: Using archived data: /nsm/server_data/securityonion/archive/2013-11-08/doug-virtual-machine-eth1/10.0.2.15:1066_192.168.56.50:80-6.raw
++
+     */
+ 
+     // Find pcap
+--- securityonion-capme-20121213.orig/capme/.scripts/cliscript.tcl
++++ securityonion-capme-20121213/capme/.scripts/cliscript.tcl
+@@ -227,14 +227,11 @@ if { [catch {tls::import $socketID -ssl2
+ }
+ 
+ # Give SSL a sec
+-#after 1000
++# after 1000
+ 
+-# PING/PONG a few times to ensure connection
+-SendToSguild $socketID "PING"
+-set INIT [gets $socketID]
+-SendToSguild $socketID "PING"
+-set INIT [gets $socketID]
++# Send sguild a ping to confirm comms
+ SendToSguild $socketID "PING"
++# Get the PONG
+ set INIT [gets $socketID]
+ 
+ #
+--- securityonion-capme-20121213.orig/capme/.scripts/cliscriptbro.tcl
++++ securityonion-capme-20121213/capme/.scripts/cliscriptbro.tcl
+@@ -227,14 +227,11 @@ if { [catch {tls::import $socketID -ssl2
+ }
+ 
+ # Give SSL a sec
+-#after 1000
++# after 1000
+ 
+-# PING/PONG a few times to ensure connection
+-SendToSguild $socketID "PING"
+-set INIT [gets $socketID]
+-SendToSguild $socketID "PING"
+-set INIT [gets $socketID]
++# Send sguild a ping to confirm comms
+ SendToSguild $socketID "PING"
++# Get the PONG
+ set INIT [gets $socketID]
+ 
+ #

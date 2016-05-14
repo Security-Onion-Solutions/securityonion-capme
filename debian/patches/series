@@ -25,3 +25,4 @@ Add-default-datetime-text-for-search-and-fix-checkbox-state-issue.-#12
 package-PR-#13
 -Issue-736:-CapMe:-Debug-information-occasionally-gets-rendered-inside-the-transcript
 previous-fix-didn't-work,-try-pingpong
+issues-736-and-738
