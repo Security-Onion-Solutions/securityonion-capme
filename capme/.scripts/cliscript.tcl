@@ -227,14 +227,11 @@ if { [catch {tls::import $socketID -ssl2 false -ssl3 false -tls1 true} tlsError]
 }
 
 # Give SSL a sec
-#after 1000
+# after 1000
 
-# PING/PONG a few times to ensure connection
+# Send sguild a ping to confirm comms
 SendToSguild $socketID "PING"
-set INIT [gets $socketID]
-SendToSguild $socketID "PING"
-set INIT [gets $socketID]
-SendToSguild $socketID "PING"
+# Get the PONG
 set INIT [gets $socketID]
 
 #
