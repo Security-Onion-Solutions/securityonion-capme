@@ -279,6 +279,7 @@ if ($err == 1) {
 
     // If user requested the standard tcpflow transcript, check output
     // for signs of gzip encoding.  If found, resubmit using Bro.
+    // TODO: break out of foreach loop if we find gzip or if we reach 1000 lines
     $foundgzip=0;
     if ($xscript == "tcpflow") {
 	foreach ($raw as $line) {
