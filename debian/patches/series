@@ -27,3 +27,4 @@ package-PR-#13
 previous-fix-didn't-work,-try-pingpong
 issues-736-and-738
 Issue-916:-CapMe:-Check-for-gzip-encoding-and-automatically-switch-to-Bro-transcript
+better-formatting

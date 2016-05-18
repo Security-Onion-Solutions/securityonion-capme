@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion40) trusty; urgency=medium
+
+  * better formatting 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 18 May 2016 10:49:58 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion39) trusty; urgency=medium
 
   * Issue 916: CapMe: Check for gzip encoding and automatically switch to Bro transcript

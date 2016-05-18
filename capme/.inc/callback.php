@@ -1,6 +1,7 @@
 <?php
 
 include_once 'functions.php';
+$time0 = microtime(true);
 
 if (!isset($_REQUEST['d'])) { 
     exit;
@@ -268,6 +269,7 @@ if ($err == 1) {
 } else {
 
     // We have all the data we need, so pass the parameters to the correct cliscript
+    $time1 = microtime(true);
     $script = "cliscript.tcl";
     if ($xscript == "bro") {
 	$script = "cliscriptbro.tcl";
@@ -276,18 +278,20 @@ if ($err == 1) {
 
     // Request pcap/transcript.
     exec("../.scripts/$cmd",$raw);
+    $time2 = microtime(true);
 
     // If user requested the standard tcpflow transcript, check output
     // for signs of gzip encoding.  If found, resubmit using Bro.
-    // TODO: break out of foreach loop if we find gzip or if we reach 1000 lines
     $foundgzip=0;
     if ($xscript == "tcpflow") {
 	foreach ($raw as $line) {
 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
 			$foundgzip=1;
+			break;
 		}
 	}
     }
+    $time3 = microtime(true);
 
     // Initialize $raw before requesting pcap again.
     $raw="";
@@ -296,46 +300,36 @@ if ($err == 1) {
     if ($foundgzip==1) {
 	$script = "cliscriptbro.tcl";
 	$cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
-	$fmtd .= "<span class=txtext_hdr>CAPME: Detected gzip encoding.</span>";
-	$fmtd .= "<span class=txtext_hdr>CAPME: Automatically switched to Bro transcript.</span>";
+	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
+	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
     }
 
     // Request pcap/transcript.
     // Always request pcap a second time to ensure consistent DEBUG output.
     exec("../.scripts/$cmd",$raw);
+    $time4 = microtime(true);
 
-    // To handle large pcaps more gracefully, we now only render 1000 lines of output by default.
-    $outputlines=0;
-    $maxoutputlines=1000;
+    // To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
+    $transcriptbytes=0;
+    $maxtranscriptbytes=500000;
 
     // Iterate through all lines and format as necessary
     foreach ($raw as $line) {
+	$transcriptbytes += strlen($line);
+	if ($transcriptbytes <= $maxtranscriptbytes) {
+	        $line = htmlspecialchars($line);
+        	$type = substr($line, 0,3);
+	        switch ($type) {
+        	    case "DEB": $debug .= preg_replace('/^DEBUG:.*$/', "<span class=txtext_dbg>$0</span>", $line) . "<br>"; $line = ''; break;
+	            case "HDR": $line = preg_replace('/(^HDR:)(.*$)/', "<span class=txtext_hdr>$2</span>", $line); break;
+        	    case "DST": $line = preg_replace('/^DST:.*$/', "<span class=txtext_dst>$0</span>", $line); break;
+	            case "SRC": $line = preg_replace('/^SRC:.*$/', "<span class=txtext_src>$0</span>", $line); break;
+        	}
 
-        $line = htmlspecialchars($line);
-        $type = substr($line, 0,3);
-
-        switch ($type) {
-            case "DEB": $debug .= preg_replace('/^DEBUG:.*$/', "<span class=txtext_dbg>$0</span>", $line) . "<br>"; $line = ''; break;
-            case "HDR": $line = preg_replace('/(^HDR:)(.*$)/', "<span class=txtext_hdr>$2</span>", $line); break;
-            case "DST": $line = preg_replace('/^DST:.*$/', "<span class=txtext_dst>$0</span>", $line); break;
-            case "SRC": $line = preg_replace('/^SRC:.*$/', "<span class=txtext_src>$0</span>", $line); break;
-        }
-
-	$outputlines++;
-        if (strlen($line) > 0) {
-		if ($outputlines < $maxoutputlines) {
+        	if (strlen($line) > 0) {
 	            $fmtd  .= $line . "<br>";
 		}
         }
-    }
-
-    // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
-    if ($outputlines >= $maxoutputlines) {
-	$fmtd .= "=================================================================<br>";
-	$fmtd .= "CAPME: Only showing the first $maxoutputlines lines of transcript output.<br>";
-	$fmtd .= "CAPME: This transcript has a total of $outputlines lines.<br>";
-	$fmtd .= "CAPME: To see the entire stream, you can download the pcap using the link below.<br>";
-	$fmtd .= "=================================================================<br>";
     }
 
     // default to sending transcript
@@ -385,8 +379,20 @@ if ($err == 1) {
     	$full_filename = "/nsm/server_data/securityonion/archive/$dailylog/$sensorname/$filename";
     }	
 
-    // Add query to debug
+    // Add query and timer information to debug
+    $debug = "<br>" . $debug;
     $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
+    $time5 = microtime(true);
+    $debug .= "<span class=txtext_dbg>CAPME: Processed transcript in " . number_format(($time5 - $time0), 2) . " seconds.</span><br>";
+    // Detailed timers for each part of the process
+    // $fmtd .= "CAPME: ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "<br>";
+
+    // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
+    if ($transcriptbytes > $maxtranscriptbytes) {
+	$debug .= "<span class=txtext_dbg>CAPME: <b>Only showing the first " . number_format($maxtranscriptbytes) . " bytes of transcript output.</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>This transcript has a total of " . number_format($transcriptbytes) . " bytes.</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>To see the entire stream, you can download the pcap using the link below.</b></span><br>";
+    }
 
     // if we found the pcap, create a symlink in /var/www/so/capme/pcap/
     // and then create a hyperlink to that symlink
@@ -396,7 +402,7 @@ if ($err == 1) {
 	$filename_download = "$filename_random.pcap";
 	$link = "/var/www/so/capme/pcap/$filename_download";
 	symlink($full_filename, $link);
-	$debug .= "<br><a href=\"/capme/pcap/$filename_download\">$filename_download</a>";
+	$debug .= "<br><br><a href=\"/capme/pcap/$filename_download\">$filename_download</a>";
 	$mytx = "<a href=\"/capme/pcap/$filename_download\">$filename_download</a><br><br>$mytx";
 	// if the user requested pcap, send the pcap instead of the transcript
 	if ($xscript == "pcap") {
@@ -405,6 +411,7 @@ if ($err == 1) {
     } else {
         $debug .= "<br>WARNING: Unable to find pcap.";
     }
+
 
     $result = array("tx"  => "$mytx",
                     "dbg" => "$debug",
