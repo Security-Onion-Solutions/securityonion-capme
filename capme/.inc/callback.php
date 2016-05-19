@@ -285,7 +285,7 @@ if ($err == 1) {
     // for signs of gzip encoding.  If found, resubmit using Bro.
     $foundgzip=0;
     foreach ($raw as $line) {
-	if (preg_match("/ERROR: Connection failed/i", $line)) {
+	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalid("ERROR: Connection to sguild failed!");
 	}
     	if ($xscript == "auto") {
@@ -319,7 +319,7 @@ if ($err == 1) {
 
     // Iterate through all lines and format as necessary
     foreach ($raw as $line) {
-	if (preg_match("/ERROR: Connection failed/i", $line)) {
+	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalid("ERROR: Connection to sguild failed!");
 	}
 	$transcriptbytes += strlen($line);
