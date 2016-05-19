@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion42) trusty; urgency=medium
+
+  * CapMe: Handle sguild failure more gracefully #922 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 19 May 2016 06:39:32 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion41) trusty; urgency=medium
 
   * add new output option on capme submission page to automatically switch to bro for gzip

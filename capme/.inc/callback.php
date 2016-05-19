@@ -280,11 +280,15 @@ if ($err == 1) {
     exec("../.scripts/$cmd",$raw);
     $time2 = microtime(true);
 
+    // Check for error
     // If user requested the auto tcpflow/bro transcript, check output
     // for signs of gzip encoding.  If found, resubmit using Bro.
     $foundgzip=0;
-    if ($xscript == "auto") {
-	foreach ($raw as $line) {
+    foreach ($raw as $line) {
+	if (preg_match("/ERROR: Connection failed/i", $line)) {
+		invalid("ERROR: Connection to sguild failed!");
+	}
+    	if ($xscript == "auto") {
 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
 			$foundgzip=1;
 			break;
@@ -315,6 +319,9 @@ if ($err == 1) {
 
     // Iterate through all lines and format as necessary
     foreach ($raw as $line) {
+	if (preg_match("/ERROR: Connection failed/i", $line)) {
+		invalid("ERROR: Connection to sguild failed!");
+	}
 	$transcriptbytes += strlen($line);
 	if ($transcriptbytes <= $maxtranscriptbytes) {
 	        $line = htmlspecialchars($line);
