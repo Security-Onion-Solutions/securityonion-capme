@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion41) trusty; urgency=medium
+
+  * add new output option on capme submission page to automatically switch to bro for gzip
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 19 May 2016 04:55:26 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion40) trusty; urgency=medium
 
   * better formatting 

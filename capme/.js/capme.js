@@ -159,7 +159,7 @@ $(document).ready(function(){
 	}
 
        frmArgs = $('input[value!=""]').length;
-       if (frmArgs == 17) {
+       if (frmArgs == 18) {
             reqCap("usefrm");
         } else {
             theMsg("Please complete all form fields");

@@ -126,7 +126,10 @@ if (isset($_REQUEST['filename'])) {
 } else {
     $sancp = " checked";
 }
-$tcpflow = " checked";
+
+// Default to the "auto" tcpflow/bro transcript option
+$auto = " checked";
+
 ?>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -202,6 +205,7 @@ capME!
 <tr>
 <td class=capme_left>Output:</td>
 <td class=capme_right>
+<input type=radio name=xscript class=capme_rad value="auto"<?php echo $auto;?>>auto
 <input type=radio name=xscript class=capme_rad value="tcpflow"<?php echo $tcpflow;?>>tcpflow
 <input type=radio name=xscript class=capme_rad value="bro"<?php echo $bro;?>>bro
 <input type=radio name=xscript class=capme_rad value="pcap"<?php echo $pcap;?>>pcap

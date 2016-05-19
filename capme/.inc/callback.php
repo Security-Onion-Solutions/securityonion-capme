@@ -120,9 +120,9 @@ if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
 }
 
 // Validate user input - xscript
-// valid values are: tcpflow, bro, and pcap
+// valid values are: auto, tcpflow, bro, and pcap
 $xscript = h2s($d[9]);
-if (!( $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
+if (!( $xscript == 'auto' || $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
 	invalid("Invalid xscript.");
 }
 
@@ -280,10 +280,10 @@ if ($err == 1) {
     exec("../.scripts/$cmd",$raw);
     $time2 = microtime(true);
 
-    // If user requested the standard tcpflow transcript, check output
+    // If user requested the auto tcpflow/bro transcript, check output
     // for signs of gzip encoding.  If found, resubmit using Bro.
     $foundgzip=0;
-    if ($xscript == "tcpflow") {
+    if ($xscript == "auto") {
 	foreach ($raw as $line) {
 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
 			$foundgzip=1;
@@ -387,7 +387,7 @@ if ($err == 1) {
     // Detailed timers for each part of the process
     // $fmtd .= "CAPME: ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "<br>";
 
-    // If we exceeded $maxoutputlines, notify the user and recommend downloading the pcap.
+    // If we exceeded $maxtranscriptbytes, notify the user and recommend downloading the pcap.
     if ($transcriptbytes > $maxtranscriptbytes) {
 	$debug .= "<span class=txtext_dbg>CAPME: <b>Only showing the first " . number_format($maxtranscriptbytes) . " bytes of transcript output.</b></span><br>";
 	$debug .= "<span class=txtext_dbg>CAPME: <b>This transcript has a total of " . number_format($transcriptbytes) . " bytes.</b></span><br>";
