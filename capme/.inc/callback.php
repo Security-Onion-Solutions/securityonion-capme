@@ -392,7 +392,7 @@ if ($err == 1) {
     $time5 = microtime(true);
     $debug .= "<span class=txtext_dbg>CAPME: Processed transcript in " . number_format(($time5 - $time0), 2) . " seconds.</span><br>";
     // Detailed timers for each part of the process
-    // $fmtd .= "CAPME: ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "<br>";
+    // $debug .= "<span class=txtext_dbg>CAPME: " . ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "</span><br>";
 
     // If we exceeded $maxtranscriptbytes, notify the user and recommend downloading the pcap.
     if ($transcriptbytes > $maxtranscriptbytes) {
