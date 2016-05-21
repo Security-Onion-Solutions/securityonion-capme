@@ -14,105 +14,48 @@
 
 ########################## GLOBALS ##################################
 
-set VERSION "SGUIL-0.9.0 OPENSSL ENABLED"
-set SERVER 127.0.0.1
-set PORT 7734
-
-# Comment out the following 2 lines if 
-# you wish to be prompted for a user/pass
-
-#set USERNAME "beta"
-#set PASSWD "band"
-
-#########################################################################
-# Get cmd line args
-#########################################################################
-
-proc DisplayUsage { cmdName } {
-
-    puts "Usage: $cmdName \[-s <server>\] \[-p <port>\] \[-u <username>\]"
-    puts "  \[-o <filename>\] \[-sensor <sensorname>\] \[-timestamp  <timestamp>\]"
-    puts "  \[-sid <sensorid>\] \[-sip <sip>\] \[-dip <dip>\]"
-    puts "  \[-spt <spt>\] \[-dpt <dpt>\]\n"
-    puts "  -s         <servername>: Hostname of sguild server."
-    puts "  -p         <port>: Port of sguild server."
-    puts "  -u         <username>: Username to connect as."
-    puts "  -pw        <password>: Password to connect with."
-    puts "  -o         <filename>: PATH to tls libraries if needed."
-    puts "  -sensor    <sensorname>: The sensor name."
-    puts "  -timestamp <\"timestamp\">: Event timestamp. e.g.: \"2012-08-18 16:28:00\""
-    puts "  -sid       <sensorid>: The sensor ID."
-    puts "  -sip       <sip>: Source IP."
-    puts "  -dip       <dip>: Destination IP."
-    puts "  -spt       <spt>: Source port."
-    puts "  -dpt       <dpt>: Destination port.\n"
-    exit 1
-
+### Load extended tcl
+if [catch {package require Tclx} tclxVersion] {
+    puts "Error: Package TclX not found"
+    exit
 }
 
-set state flag
-
-foreach arg $argv {
-
-    switch -- $state {
-
-        flag {
-            switch -glob -- $arg {
-                -s { set state server }
-                -p { set state port }
-                -u { set state username }
-                -pw { set state password }
-                -o { set state openssl }
-                -sensor { set state sensorname }
-                -timestamp { set state timestamp }
-                -sid { set state sensorid }
-                -sip { set state sip }
-                -dip { set state dip }
-                -spt { set state spt }
-                -dpt { set state dpt }
-                default { DisplayUsage $argv0 }
-            }
+set CONFIG "../.inc/config.php"
+if {[file exists $CONFIG]} {
+    for_file line $CONFIG {
+        if { [regexp {^\$([^\s]+)\s+=\s+['"]([^'"]+)['"]} $line match theVar theVal] } {
+            set configArray($theVar) $theVal
         }
-
-        server { set SERVER $arg; set state flag }
-        port { set PORT $arg; set state flag }
-        username { set USERNAME $arg; set state flag }
-        password { set PASSWD $arg; set state flag }
-        openssl { set TLS_PATH $arg; set state flag }
-        sensorname { set SENSORNAME $arg; set state flag }
-        timestamp { set TIMESTAMP $arg; set state flag }
-        sensorid { set SENSORID $arg; set state flag }
-        sip { set SRCIP $arg; set state flag }
-        dip { set DSTIP $arg; set state flag }
-        spt { set SRCPORT $arg; set state flag }
-        dpt { set DSTPORT $arg; set state flag }
-        default { DisplayUsage $argv0 }
-
     }
-
+    set VERSION  $configArray(sgVer)
+    set SERVER   $configArray(sgHost)
+    set PORT     $configArray(sgPort)
+} else {
+    puts "I could not find a confguration file"
+    exit 1
 }
 
-# Check if we got all of our arguments
+if { $argc == 8 } {
+    set USR [lindex $argv 0]
+    set SEN [lindex $argv 1]
+    set TS  [lindex $argv 2]
+    set SID [lindex $argv 3]
+    set SIP [lindex $argv 4]
+    set DIP [lindex $argv 5]
+    set SPT [lindex $argv 6]
+    set DPT [lindex $argv 7]
+} else {
+    puts "ERROR: Not enough arguments"
+    exit 1
+}
 
-if { [catch {set eventInfo "$SENSORNAME \"$TIMESTAMP\" $SENSORID $SRCIP $DSTIP $SRCPORT $DSTPORT"}] } {
-    DisplayUsage $argv0
-} 
+set eventInfo "\"$SEN\" \"$TS\" $SID $SIP $DIP $SPT $DPT"
 
 # Now verify
+if { ![regexp -expanded { ^\".+\"\s\"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\:\d{2}\"\s\d+\s\d+\.\d+\.\d+\.\d+\s\d+\.\d+\.\d+\.\d+\s\d+\s\d+$ } $eventInfo match] } {
 
-if { [regexp -expanded {
-
-            ^.+\s
-            \"\d\d\d\d-\d\d-\d\d\s\d\d:\d\d:\d\d\"\s
-            \d+\s
-            \d+\.\d+\.\d+\.\d+\s
-            \d+\.\d+\.\d+\.\d+\s
-            \d+\s
-            \d+$ } $eventInfo match] } {
-
-} else {
-
-    DisplayUsage $argv0
+    puts "ERROR: Arguments failed logic tests"
+    exit 1
 
 }
 
@@ -219,7 +162,7 @@ if { $serverVersion != $VERSION } {
 SendToSguild $socketID [list VersionInfo $VERSION]
 
 # SSL-ify the socket
-if { [catch {tls::import $socketID -ssl2 false -ssl3 false -tls1 true} tlsError] } { 
+if { [catch {tls::import $socketID -ssl2 false -ssl3 false -tls1 true } tlsError] } { 
 
     puts "ERROR: $tlsError"
     exit 1
@@ -227,7 +170,7 @@ if { [catch {tls::import $socketID -ssl2 false -ssl3 false -tls1 true} tlsError]
 }
 
 # Give SSL a sec
-# after 1000
+after 1000
 
 # Send sguild a ping to confirm comms
 SendToSguild $socketID "PING"
@@ -238,28 +181,11 @@ set INIT [gets $socketID]
 # Auth starts here
 #
 
-# Get username if not provided at cmd line
-if { ![info exists USERNAME] } {
-
-    puts -nonewline "Enter username: "
-    flush stdout
-    set USERNAME [gets stdin]
-
-}
-
 # Get users password
-if { ![info exists PASSWD] } {
-    puts -nonewline "Enter password: "
-    flush stdout
-    exec stty -echo
-    set PASSWD [gets stdin]
-    exec stty echo
-    flush stdout
-    puts ""
-}
+set PWD [gets stdin]
 
 # Authenticate with sguild
-SendToSguild $socketID [list ValidateUser $USERNAME $PASSWD]
+SendToSguild $socketID [list ValidateUser $USR $PWD]
 
 # Get the response. Success will return the users ID and failure will send INVALID.
 if { [catch {gets $socketID} authMsg] } { 
@@ -287,7 +213,7 @@ set SESSION_STATE DEBUG
 
 while { 1 } {
 
-    if { [eof $socketID] } { puts "ERROR: Lost connection to server."; exit 1 }
+    if { [eof $socketID] } { puts "ERROR: Lost connection to server."; exit 1; }
 
     if { [catch {gets $socketID} msg] } {
 
@@ -298,7 +224,6 @@ while { 1 } {
   
     # Strip the command and faux winname from the msg
     set data [lindex $msg 2]
-
 
     switch -exact -- $data {
 

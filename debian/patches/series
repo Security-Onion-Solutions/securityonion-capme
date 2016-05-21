@@ -31,3 +31,4 @@ better-formatting
 add-new-output-option-on-capme-submission-page-to-automatically-switch-to-bro-for-gzip
 CapMe:-Handle-sguild-failure-more-gracefully-#922
 check-for-sguild-failure-needs-to-be-more-strict
+-Issue-493:-CapMe:-send-credentials-interactively-to-avoid-exposing-on-command-line

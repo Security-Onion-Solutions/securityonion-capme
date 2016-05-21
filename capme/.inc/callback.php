@@ -30,6 +30,26 @@ function invalid($string) {
 	exit;
 }
 
+function cliscript($cmd, $pwd) {
+    $descspec = array(
+                 0 => array("pipe", "r"),
+                 1 => array("pipe", "w"),
+                 2 => array("pipe", "w")
+    );
+    $proc = proc_open($cmd, $descspec, $pipes);
+    $debug = "Process execution failed";
+    $_raw = "";
+    if (is_resource($proc)) {
+        fwrite($pipes[0], $pwd);
+        fclose($pipes[0]);
+        $_raw = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $debug = fgets($pipes[2]);
+        fclose($pipes[2]);
+    }
+    return explode("\n", $_raw);
+}
+
 // Validate user input - source IP address
 $sip	= h2s($d[0]);
 if (!filter_var($sip, FILTER_VALIDATE_IP)) {
@@ -274,10 +294,8 @@ if ($err == 1) {
     if ($xscript == "bro") {
 	$script = "cliscriptbro.tcl";
     }
-    $cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
-
-    // Request pcap/transcript.
-    exec("../.scripts/$cmd",$raw);
+    $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+    $raw = cliscript($cmd, $pwd);
     $time2 = microtime(true);
 
     // Check for error
@@ -302,15 +320,14 @@ if ($err == 1) {
 
     // If we found gzip encoding, then request Bro transcript.
     if ($foundgzip==1) {
-	$script = "cliscriptbro.tcl";
-	$cmd = "$script -sid $sid -sensor '$sensor' -timestamp '$st' -u '$usr' -pw '$pwd' -sip $sip -spt $spt -dip $dip -dpt $dpt";
+    	$cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
     }
 
     // Request pcap/transcript.
     // Always request pcap a second time to ensure consistent DEBUG output.
-    exec("../.scripts/$cmd",$raw);
+    $raw = cliscript($cmd, $pwd);
     $time4 = microtime(true);
 
     // To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
@@ -391,8 +408,7 @@ if ($err == 1) {
     $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
     $time5 = microtime(true);
     $debug .= "<span class=txtext_dbg>CAPME: Processed transcript in " . number_format(($time5 - $time0), 2) . " seconds.</span><br>";
-    // Detailed timers for each part of the process
-    // $debug .= "<span class=txtext_dbg>CAPME: " . ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "</span><br>";
+    $debug .= "<span class=txtext_dbg>CAPME: " . ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "</span><br>";
 
     // If we exceeded $maxtranscriptbytes, notify the user and recommend downloading the pcap.
     if ($transcriptbytes > $maxtranscriptbytes) {
