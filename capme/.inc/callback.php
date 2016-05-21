@@ -190,17 +190,18 @@ if ($sidsrc == "elsa") {
 	has been extended to include the sensor name (HOSTNAME-INTERFACE).
 	*/
 
-	// Construct the ELSA query
+	// Construct the ELSA query.
 	$elsa_query = "class=bro_conn start:'$st_unix' end:'$et_unix' +$sip +$spt +$dip +$dpt limit:1 timeout:0";
 
-	// Submit the ELSA query via cli.sh
+	// Submit the ELSA query via cli.sh.
+	// TODO: have PHP connect directly to ELSA API without shell_exec
 	$elsa_command = "sh /opt/elsa/contrib/securityonion/contrib/cli.sh '$elsa_query' ";
 	$elsa_response = shell_exec($elsa_command);
 
-	// Try to decode the response as JSON
+	// Try to decode the response as JSON.
 	$elsa_response_object = json_decode($elsa_response, true);
 
-	// Check for common error conditions
+	// Check for common error conditions.
 	if (json_last_error() !== JSON_ERROR_NONE) { 
 		$errMsgELSA = "Couldn't decode JSON from ELSA API.";
 	} elseif ( $elsa_response_object["recordsReturned"] == "0") {
@@ -211,20 +212,20 @@ if ($sidsrc == "elsa") {
 		$errMsgELSA = "Not a TCP stream.";
 	} else { 
 
-		// Looks good so far, so let's try to parse out the sensor name and timestamp
+		// Looks good so far, so let's try to parse out the sensor name and timestamp.
 
-		// Pull the raw log out of the response object
+		// Pull the raw log out of the response object.
 		$elsa_response_data_raw_log = $elsa_response_object["results"][0]["msg"];
 
-		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name
+		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name.
 		$pieces = explode("|", $elsa_response_data_raw_log);
 		$elsa_response_data_raw_log_timestamp = $pieces[0];
 		$elsa_response_data_raw_log_sensor = end($pieces);
 
-		// Convert timestamp to proper format
+		// Convert timestamp to proper format.
 		$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
 
-		// Clean up $sensor
+		// Clean up $sensor.
 		$sensor = rtrim($elsa_response_data_raw_log_sensor);
 
 	} 
@@ -234,7 +235,7 @@ if ($sidsrc == "elsa") {
 }
 
 /*
-Query the Sguil database
+Query the Sguil database.
 If the user selected sancp or event, query those tables and get
 the 3 pieces of data that we need.
 */
@@ -273,7 +274,7 @@ if (!$response) {
     }
 } else {
     $row = mysql_fetch_assoc($response);
-    // If using ELSA, we already set $st and $sensor above so don't overwrite that here
+    // If using ELSA, we already set $st and $sensor above so don't overwrite that here.
     if ($sidsrc != "elsa") {
         $st = $row["start_time"];
     	$sensor = $row["hostname"]; 
@@ -285,10 +286,9 @@ if ($err == 1) {
     $result = array("tx"  => "0",
                     "dbg" => "$debug",
                     "err" => "$errMsg");
-
 } else {
 
-    // We have all the data we need, so pass the parameters to the correct cliscript
+    // We have all the data we need, so pass the parameters to the correct cliscript.
     $time1 = microtime(true);
     $script = "cliscript.tcl";
     if ($xscript == "bro") {
@@ -298,9 +298,7 @@ if ($err == 1) {
     $raw = cliscript($cmd, $pwd);
     $time2 = microtime(true);
 
-    // Check for error
-    // If user requested the auto tcpflow/bro transcript, check output
-    // for signs of gzip encoding.  If found, resubmit using Bro.
+    // Check for errors or signs of gzip encoding.
     $foundgzip=0;
     foreach ($raw as $line) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
@@ -315,9 +313,6 @@ if ($err == 1) {
     }
     $time3 = microtime(true);
 
-    // Initialize $raw before requesting pcap again.
-    $raw="";
-
     // If we found gzip encoding, then request Bro transcript.
     if ($foundgzip==1) {
     	$cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
@@ -325,8 +320,7 @@ if ($err == 1) {
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
     }
 
-    // Request pcap/transcript.
-    // Always request pcap a second time to ensure consistent DEBUG output.
+    // Always request pcap/transcript a second time to ensure consistent DEBUG output.
     $raw = cliscript($cmd, $pwd);
     $time4 = microtime(true);
 
@@ -334,7 +328,7 @@ if ($err == 1) {
     $transcriptbytes=0;
     $maxtranscriptbytes=500000;
 
-    // Iterate through all lines and format as necessary
+    // Check for errors and format as necessary.
     foreach ($raw as $line) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalid("ERROR: Connection to sguild failed!");
@@ -356,7 +350,7 @@ if ($err == 1) {
         }
     }
 
-    // default to sending transcript
+    // Default to sending transcript.
     $mytx = $fmtd;
 
     /*
@@ -378,7 +372,7 @@ if ($err == 1) {
 
     */
 
-    // Find pcap
+    // Find pcap file.
     $archive = '/DEBUG: Using archived data.*/';
     $unique = '/DEBUG: Creating unique data file.*/';
     $found_pcap = 0;
@@ -403,12 +397,16 @@ if ($err == 1) {
     	$full_filename = "/nsm/server_data/securityonion/archive/$dailylog/$sensorname/$filename";
     }	
 
-    // Add query and timer information to debug
+    // Add query and timer information to debug section.
     $debug = "<br>" . $debug;
     $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
     $time5 = microtime(true);
-    $debug .= "<span class=txtext_dbg>CAPME: Processed transcript in " . number_format(($time5 - $time0), 2) . " seconds.</span><br>";
-    $debug .= "<span class=txtext_dbg>CAPME: " . ($time1 - $time0) . " " . ($time2 - $time1) . " " . ($time3 - $time2) . " " . ($time4 - $time3) . " " . ($time5 - $time4) . "</span><br>";
+    $alltimes  = number_format(($time1 - $time0), 2) . " ";
+    $alltimes .= number_format(($time2 - $time1), 2) . " ";
+    $alltimes .= number_format(($time3 - $time2), 2) . " ";
+    $alltimes .= number_format(($time4 - $time3), 2) . " ";
+    $alltimes .= number_format(($time5 - $time4), 2);
+    $debug .= "<span class=txtext_dbg>CAPME: Processed transcript in " . number_format(($time5 - $time0), 2) . " seconds: " . $alltimes . "</span><br>";
 
     // If we exceeded $maxtranscriptbytes, notify the user and recommend downloading the pcap.
     if ($transcriptbytes > $maxtranscriptbytes) {
@@ -418,7 +416,7 @@ if ($err == 1) {
     }
 
     // if we found the pcap, create a symlink in /var/www/so/capme/pcap/
-    // and then create a hyperlink to that symlink
+    // and then create a hyperlink to that symlink.
     if ($found_pcap == 1) {
       	$tmpstring = rand();
 	$filename_random = str_replace(".raw", "", "$filename-$tmpstring");
@@ -435,12 +433,13 @@ if ($err == 1) {
         $debug .= "<br>WARNING: Unable to find pcap.";
     }
 
-
+    // Pack the output into an array.
     $result = array("tx"  => "$mytx",
                     "dbg" => "$debug",
                     "err" => "$errMsg");
 }
 
+// Encode the array and send it to the browser.
 $theJSON = json_encode($result);
 echo $theJSON;
 ?>
