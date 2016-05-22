@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion46) trusty; urgency=medium
+
+  * remove unnecessary delay 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sun, 22 May 2016 14:08:28 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion45) trusty; urgency=medium
 
   * clean up 

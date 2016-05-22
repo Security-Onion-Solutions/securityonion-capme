@@ -33,3 +33,4 @@ CapMe:-Handle-sguild-failure-more-gracefully-#922
 check-for-sguild-failure-needs-to-be-more-strict
 -Issue-493:-CapMe:-send-credentials-interactively-to-avoid-exposing-on-command-line
 clean-up
+remove-unnecessary-delay
