@@ -132,16 +132,23 @@ if ($link) {
         invalid("Connection Failed.");
 }
 
+// Validate user input - maxtxbytes
+// must be an integer between 1000 and 100000000
+$maxtranscriptbytes	= h2s($d[8]);
+if (filter_var($maxtranscriptbytes, FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
+	invalid("Invalid maximum transcript bytes.");
+}
+
 // Validate user input - sidsrc
 // valid values are: sancp, event, and elsa
-$sidsrc = h2s($d[8]);
+$sidsrc = h2s($d[9]);
 if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
 	invalid("Invalid sidsrc.");
 }
 
 // Validate user input - xscript
 // valid values are: auto, tcpflow, bro, and pcap
-$xscript = h2s($d[9]);
+$xscript = h2s($d[10]);
 if (!( $xscript == 'auto' || $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
 	invalid("Invalid xscript.");
 }
@@ -324,15 +331,15 @@ if ($err == 1) {
     $raw = cliscript($cmd, $pwd);
     $time4 = microtime(true);
 
-    // To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
+    // Initialize $transcriptbytes so we can count the number of bytes in the transcript
     $transcriptbytes=0;
-    $maxtranscriptbytes=500000;
 
     // Check for errors and format as necessary.
     foreach ($raw as $line) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalid("ERROR: Connection to sguild failed!");
 	}
+    	// To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
 	$transcriptbytes += strlen($line);
 	if ($transcriptbytes <= $maxtranscriptbytes) {
 	        $line = htmlspecialchars($line);
@@ -412,7 +419,10 @@ if ($err == 1) {
     if ($transcriptbytes > $maxtranscriptbytes) {
 	$debug .= "<span class=txtext_dbg>CAPME: <b>Only showing the first " . number_format($maxtranscriptbytes) . " bytes of transcript output.</b></span><br>";
 	$debug .= "<span class=txtext_dbg>CAPME: <b>This transcript has a total of " . number_format($transcriptbytes) . " bytes.</b></span><br>";
-	$debug .= "<span class=txtext_dbg>CAPME: <b>To see the entire stream, you can download the pcap using the link below.</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>To see the entire stream, you can either:</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>- click the 'close' button, increase Max Xscript Bytes, and resubmit (may take a while)</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>OR</b></span><br>";
+	$debug .= "<span class=txtext_dbg>CAPME: <b>- you can download the pcap using the link below.</b></span><br>";
     }
 
     // if we found the pcap, create a symlink in /var/www/so/capme/pcap/

@@ -1,0 +1,176 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion47) trusty; urgency=medium
+ .
+   * add Max Transcript Bytes to submission form
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -132,16 +132,23 @@ if ($link) {
+         invalid("Connection Failed.");
+ }
+ 
++// Validate user input - maxtxbytes
++// must be an integer between 1000 and 100000000
++$maxtranscriptbytes	= h2s($d[8]);
++if (filter_var($maxtranscriptbytes, FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
++	invalid("Invalid maximum transcript bytes.");
++}
++
+ // Validate user input - sidsrc
+ // valid values are: sancp, event, and elsa
+-$sidsrc = h2s($d[8]);
++$sidsrc = h2s($d[9]);
+ if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
+ 	invalid("Invalid sidsrc.");
+ }
+ 
+ // Validate user input - xscript
+ // valid values are: auto, tcpflow, bro, and pcap
+-$xscript = h2s($d[9]);
++$xscript = h2s($d[10]);
+ if (!( $xscript == 'auto' || $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
+ 	invalid("Invalid xscript.");
+ }
+@@ -324,15 +331,15 @@ if ($err == 1) {
+     $raw = cliscript($cmd, $pwd);
+     $time4 = microtime(true);
+ 
+-    // To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
++    // Initialize $transcriptbytes so we can count the number of bytes in the transcript
+     $transcriptbytes=0;
+-    $maxtranscriptbytes=500000;
+ 
+     // Check for errors and format as necessary.
+     foreach ($raw as $line) {
+ 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
+ 		invalid("ERROR: Connection to sguild failed!");
+ 	}
++    	// To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
+ 	$transcriptbytes += strlen($line);
+ 	if ($transcriptbytes <= $maxtranscriptbytes) {
+ 	        $line = htmlspecialchars($line);
+@@ -412,7 +419,10 @@ if ($err == 1) {
+     if ($transcriptbytes > $maxtranscriptbytes) {
+ 	$debug .= "<span class=txtext_dbg>CAPME: <b>Only showing the first " . number_format($maxtranscriptbytes) . " bytes of transcript output.</b></span><br>";
+ 	$debug .= "<span class=txtext_dbg>CAPME: <b>This transcript has a total of " . number_format($transcriptbytes) . " bytes.</b></span><br>";
+-	$debug .= "<span class=txtext_dbg>CAPME: <b>To see the entire stream, you can download the pcap using the link below.</b></span><br>";
++	$debug .= "<span class=txtext_dbg>CAPME: <b>To see the entire stream, you can either:</b></span><br>";
++	$debug .= "<span class=txtext_dbg>CAPME: <b>- click the 'close' button, increase Max Xscript Bytes, and resubmit (may take a while)</b></span><br>";
++	$debug .= "<span class=txtext_dbg>CAPME: <b>OR</b></span><br>";
++	$debug .= "<span class=txtext_dbg>CAPME: <b>- you can download the pcap using the link below.</b></span><br>";
+     }
+ 
+     // if we found the pcap, create a symlink in /var/www/so/capme/pcap/
+--- securityonion-capme-20121213.orig/capme/.js/capme.js
++++ securityonion-capme-20121213/capme/.js/capme.js
+@@ -159,7 +159,7 @@ $(document).ready(function(){
+ 	}
+ 
+        frmArgs = $('input[value!=""]').length;
+-       if (frmArgs == 18) {
++       if (frmArgs == 19) {
+             reqCap("usefrm");
+         } else {
+             theMsg("Please complete all form fields");
+@@ -186,6 +186,9 @@ $(document).ready(function(){
+             var dip = s2h(chkIP($("#dip").val()));
+             var dpt = s2h(chkPort($("#dpt").val()));
+ 
++	    // Max TX
++            var maxtx = s2h(chkMaxTX($("#maxtx").val()));
++
+             // Timestamps
+             if ($("#stime").val().length > 0) {
+                 var st = chkDate($("#stime").val());
+@@ -214,7 +217,7 @@ $(document).ready(function(){
+             // Continue if no errors
+             if (err == 0) {
+             
+-                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + sidsrc + "-" + xscript;
++                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + maxtx + "-" + sidsrc + "-" + xscript;
+ 
+                 $(function(){
+                     $.get(".inc/callback.php?" + urArgs, function(data){cbtx(data)});
+@@ -296,6 +299,18 @@ $(document).ready(function(){
+         }
+     }
+ 
++    // maxtx validation
++    function chkMaxTX(maxtx) {
++        var valid = /^[0-9]+$\b/;
++        if (!valid.test(maxtx) || maxtx < 1000 || maxtx > 100000000 || maxtx.charAt(0) == 0) {
++            theMsg("Error: Bad MaxTX");
++            bON('.capme_submit');
++            err = 1;
++        } else {
++            return maxtx;
++        } 
++    }
++
+     // port validation
+     function chkPort(port) {
+         var valid = /^[0-9]+$\b/;
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -10,7 +10,7 @@ function invalid($string) {
+ }
+ 
+ // Argument defaults
+-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = '';
++$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
+ 
+ // Validate user input - source IP address - sip
+ if (isset($_REQUEST['sip']))      { 
+@@ -114,6 +114,19 @@ if ( isset($_REQUEST['user']) && isset($
+ 	}
+ }
+ 
++// Validate user input - max transcript bytes - maxtx
++// must be an integer between 1000 and 100000000 (100MB)
++if (isset($_REQUEST['maxtx']))      { 
++	if (filter_var($_REQUEST['maxtx'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
++        	invalid("Invalid max transcript bytes.");
++	} else {
++		$maxtx    = $_REQUEST['maxtx'];      $s++;
++	}
++} else {
++	// Default to Max Xscript Bytes of 500,000
++	$maxtx = 500000;
++}
++
+ // If we see a filename parameter, we know the request came from Snorby
+ // and if so we can just query the event table since Snorby just has NIDS alerts
+ // If the referer contains "elsa-query", then it's most likely a Security Onion user 
+@@ -193,6 +206,12 @@ capME!
+ </td>
+ </tr>
+ 
++<tr>
++<td class=capme_left>Max Xscript Bytes:</td>
++<td class=capme_right><input type=text maxlength=32 id=maxtx class=capme_selb value="<?php echo $maxtx;?>" />
++</td>
++</tr>
++
+ <tr>
+ <td class=capme_left>Sid Source:</td>
+ <td class=capme_right>

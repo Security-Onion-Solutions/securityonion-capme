@@ -10,7 +10,7 @@ function invalid($string) {
 }
 
 // Argument defaults
-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = '';
+$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
 
 // Validate user input - source IP address - sip
 if (isset($_REQUEST['sip']))      { 
@@ -114,6 +114,19 @@ if ( isset($_REQUEST['user']) && isset($_REQUEST['password']) )      {
 	}
 }
 
+// Validate user input - max transcript bytes - maxtx
+// must be an integer between 1000 and 100000000 (100MB)
+if (isset($_REQUEST['maxtx']))      { 
+	if (filter_var($_REQUEST['maxtx'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
+        	invalid("Invalid max transcript bytes.");
+	} else {
+		$maxtx    = $_REQUEST['maxtx'];      $s++;
+	}
+} else {
+	// Default to Max Xscript Bytes of 500,000
+	$maxtx = 500000;
+}
+
 // If we see a filename parameter, we know the request came from Snorby
 // and if so we can just query the event table since Snorby just has NIDS alerts
 // If the referer contains "elsa-query", then it's most likely a Security Onion user 
@@ -190,6 +203,12 @@ capME!
 <tr>
 <td class=capme_left>Password:</td>
 <td class=capme_right><input type=password maxlength=32 id=password class=capme_selb value="<?php echo $pwd;?>" />
+</td>
+</tr>
+
+<tr>
+<td class=capme_left>Max Xscript Bytes:</td>
+<td class=capme_right><input type=text maxlength=32 id=maxtx class=capme_selb value="<?php echo $maxtx;?>" />
 </td>
 </tr>
 

@@ -159,7 +159,7 @@ $(document).ready(function(){
 	}
 
        frmArgs = $('input[value!=""]').length;
-       if (frmArgs == 18) {
+       if (frmArgs == 19) {
             reqCap("usefrm");
         } else {
             theMsg("Please complete all form fields");
@@ -185,6 +185,9 @@ $(document).ready(function(){
             var spt = s2h(chkPort($("#spt").val()));
             var dip = s2h(chkIP($("#dip").val()));
             var dpt = s2h(chkPort($("#dpt").val()));
+
+	    // Max TX
+            var maxtx = s2h(chkMaxTX($("#maxtx").val()));
 
             // Timestamps
             if ($("#stime").val().length > 0) {
@@ -214,7 +217,7 @@ $(document).ready(function(){
             // Continue if no errors
             if (err == 0) {
             
-                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + sidsrc + "-" + xscript;
+                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + maxtx + "-" + sidsrc + "-" + xscript;
 
                 $(function(){
                     $.get(".inc/callback.php?" + urArgs, function(data){cbtx(data)});
@@ -294,6 +297,18 @@ $(document).ready(function(){
         } else {
             return ip;
         }
+    }
+
+    // maxtx validation
+    function chkMaxTX(maxtx) {
+        var valid = /^[0-9]+$\b/;
+        if (!valid.test(maxtx) || maxtx < 1000 || maxtx > 100000000 || maxtx.charAt(0) == 0) {
+            theMsg("Error: Bad MaxTX");
+            bON('.capme_submit');
+            err = 1;
+        } else {
+            return maxtx;
+        } 
     }
 
     // port validation
