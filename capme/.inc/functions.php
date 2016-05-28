@@ -24,10 +24,13 @@ function invalid($string) {
 }
 
 // Argument defaults
-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
+$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $parameters = '';
 
 // Argument counters
 $s = 0;
+
+// Check each potential search parameter to see if it exists and if it's valid.
+// If valid, increment $s and add the search parameter to the $parameters string.
 
 // Validate user input - source IP address - sip
 if (isset($_REQUEST['sip']))      {
@@ -35,6 +38,7 @@ if (isset($_REQUEST['sip']))      {
                 invalid("Invalid source IP.");
         } else {
                 $sip    = $_REQUEST['sip'];      $s++;
+		$parameters .= "&sip=" . $sip;
         }
 }
 
@@ -45,6 +49,7 @@ if (isset($_REQUEST['spt']))      {
                 invalid("Invalid source port.");
         } else {
                 $spt    = $_REQUEST['spt'];      $s++;
+		$parameters .= "&spt=" . $spt;
         }
 }
 
@@ -54,6 +59,7 @@ if (isset($_REQUEST['dip']))      {
                 invalid("Invalid destination IP.");
         } else {
                 $dip    = $_REQUEST['dip'];      $s++;
+		$parameters .= "&dip=" . $dip;
         }
 }
 
@@ -64,6 +70,7 @@ if (isset($_REQUEST['dpt']))      {
                 invalid("Invalid destination port.");
         } else {
                 $dpt    = $_REQUEST['dpt'];      $s++;
+		$parameters .= "&dpt=" . $dpt;
         }
 }
 
@@ -74,6 +81,7 @@ if (isset($_REQUEST['stime']))      {
                 invalid("Invalid start time.");
         } else {
                 $stime  = $_REQUEST['stime'];   $s++;
+		$parameters .= "&stime=" . $stime;
         }
 }
 
@@ -84,6 +92,7 @@ if (isset($_REQUEST['etime']))      {
                 invalid("Invalid end time.");
         } else {
                 $etime  = $_REQUEST['etime'];   $s++;
+		$parameters .= "&etime=" . $etime;
         }
 }
 
@@ -94,14 +103,12 @@ if (isset($_REQUEST['maxtx']))      {
                 invalid("Invalid max transcript bytes.");
         } else {
                 $maxtx    = $_REQUEST['maxtx'];      $s++;
+		$parameters .= "&maxtx=" . $maxtx;
         }
 } else {
         // Default to Max Xscript Bytes of 500,000
         $maxtx = 500000;
 }
-
-// If all parameters passed validation, then create a $parameters string that can be appended to URL
-$parameters = "sip=" . $sip . "&dip=" . $dip . "&spt=" . $spt . "&dpt=" . $dpt . "&stime=" . $stime . "&etime=" . $etime . "&maxtx=" . $maxtx;
 
 ?>
 

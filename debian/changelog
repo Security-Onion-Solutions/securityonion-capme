@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion49) trusty; urgency=medium
+
+  * build parameters string dynamically to allow for empty parameters 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 28 May 2016 19:49:26 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion48) trusty; urgency=medium
 
   * Issue 871: CapMe: add session support to avoid re-authenticating every time 

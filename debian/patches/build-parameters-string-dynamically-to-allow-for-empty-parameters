@@ -1,0 +1,106 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion49) trusty; urgency=medium
+ .
+   * build parameters string dynamically to allow for empty parameters
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/functions.php
++++ securityonion-capme-20121213/capme/.inc/functions.php
+@@ -24,17 +24,21 @@ function invalid($string) {
+ }
+ 
+ // Argument defaults
+-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
++$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $parameters = '';
+ 
+ // Argument counters
+ $s = 0;
+ 
++// Check each potential search parameter to see if it exists and if it's valid.
++// If valid, increment $s and add the search parameter to the $parameters string.
++
+ // Validate user input - source IP address - sip
+ if (isset($_REQUEST['sip']))      {
+         if (!filter_var($_REQUEST['sip'], FILTER_VALIDATE_IP)) {
+                 invalid("Invalid source IP.");
+         } else {
+                 $sip    = $_REQUEST['sip'];      $s++;
++		$parameters .= "&sip=" . $sip;
+         }
+ }
+ 
+@@ -45,6 +49,7 @@ if (isset($_REQUEST['spt']))      {
+                 invalid("Invalid source port.");
+         } else {
+                 $spt    = $_REQUEST['spt'];      $s++;
++		$parameters .= "&spt=" . $spt;
+         }
+ }
+ 
+@@ -54,6 +59,7 @@ if (isset($_REQUEST['dip']))      {
+                 invalid("Invalid destination IP.");
+         } else {
+                 $dip    = $_REQUEST['dip'];      $s++;
++		$parameters .= "&dip=" . $dip;
+         }
+ }
+ 
+@@ -64,6 +70,7 @@ if (isset($_REQUEST['dpt']))      {
+                 invalid("Invalid destination port.");
+         } else {
+                 $dpt    = $_REQUEST['dpt'];      $s++;
++		$parameters .= "&dpt=" . $dpt;
+         }
+ }
+ 
+@@ -74,6 +81,7 @@ if (isset($_REQUEST['stime']))      {
+                 invalid("Invalid start time.");
+         } else {
+                 $stime  = $_REQUEST['stime'];   $s++;
++		$parameters .= "&stime=" . $stime;
+         }
+ }
+ 
+@@ -84,6 +92,7 @@ if (isset($_REQUEST['etime']))      {
+                 invalid("Invalid end time.");
+         } else {
+                 $etime  = $_REQUEST['etime'];   $s++;
++		$parameters .= "&etime=" . $etime;
+         }
+ }
+ 
+@@ -94,14 +103,12 @@ if (isset($_REQUEST['maxtx']))      {
+                 invalid("Invalid max transcript bytes.");
+         } else {
+                 $maxtx    = $_REQUEST['maxtx'];      $s++;
++		$parameters .= "&maxtx=" . $maxtx;
+         }
+ } else {
+         // Default to Max Xscript Bytes of 500,000
+         $maxtx = 500000;
+ }
+ 
+-// If all parameters passed validation, then create a $parameters string that can be appended to URL
+-$parameters = "sip=" . $sip . "&dip=" . $dip . "&spt=" . $spt . "&dpt=" . $dpt . "&stime=" . $stime . "&etime=" . $etime . "&maxtx=" . $maxtx;
+-
+ ?>
+ 
