@@ -1,14 +1,29 @@
 <?php
 
+// Increase memory limit to allow for large streams
+ini_set('memory_limit', '350M');
+
+// Terminate if this launches without a valid session
+session_start();
+if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
+    header ("Location: session.php?id=0");
+    exit();
+}
+
+
 include_once 'functions.php';
+
+// record starting time so we can see how long the callback takes
 $time0 = microtime(true);
 
+// check for data
 if (!isset($_REQUEST['d'])) { 
     exit;
 } else { 
     $d = $_REQUEST['d'];
 }
 
+// pull the individual values out
 $d = explode("-", $d);
 
 function cleanUp($string) {
@@ -20,7 +35,7 @@ function cleanUp($string) {
 }
 
 // If any input validation fails, return error and exit immediately
-function invalid($string) {
+function invalidCallback($string) {
 	$result = array("tx"  => "",
                   "dbg" => "",
                   "err" => "$string");
@@ -53,104 +68,62 @@ function cliscript($cmd, $pwd) {
 // Validate user input - source IP address
 $sip	= h2s($d[0]);
 if (!filter_var($sip, FILTER_VALIDATE_IP)) {
-	invalid("Invalid source IP.");
+	invalidCallback("Invalid source IP.");
 }
 
 // Validate user input - source port
 // must be an integer between 0 and 65535
 $spt	= h2s($d[1]);
 if (filter_var($spt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
-	invalid("Invalid source port.");
+	invalidCallback("Invalid source port.");
 }
 
 // Validate user input - destination IP address
 $dip	= h2s($d[2]);
 if (!filter_var($dip, FILTER_VALIDATE_IP)) {
-	invalid("Invalid destination IP.");
+	invalidCallback("Invalid destination IP.");
 }
 
 // Validate user input - destination port
 // must be an integer between 0 and 65535
 $dpt	= h2s($d[3]);
 if (filter_var($dpt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
-	invalid("Invalid destination port.");
+	invalidCallback("Invalid destination port.");
 }
 
 // Validate user input - start time
 // must be greater than 5 years ago and less than 5 years from today
 $st_unix= $d[4];
 if (!( ($st_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($st_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
-	invalid("Invalid start time.");
+	invalidCallback("Invalid start time.");
 }
 
 // Validate user input - end time
 // must be greater than 5 years ago and less than 5 years from today
 $et_unix= $d[5];
 if (!( ($et_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($et_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
-	invalid("Invalid end time.");
-}
-
-// Validate user input - username
-// Username must be alphanumeric
-$usr	= cleanUp(h2s($d[6]));
-if (!(ctype_alnum($usr))) {
-	invalid("The user name or password is incorrect.");
-}
-
-// Validate user input - password
-$pwd	= h2s($d[7]);
-$username = $password = $err = '';
-
-$db = mysql_connect($dbHost,$dbUser,$dbPass);
-$link = mysql_select_db($dbName, $db);
-if ($link) {
-        $query = "SELECT * FROM user_info WHERE username = '$usr'";
-        $result = mysql_query($query);
-        $numRows = mysql_num_rows($result);
-
-        if ($numRows > 0) {
-            while ($row = mysql_fetch_row($result)) {
-                $userHash       = $row[3];
-            }
-            // The first 2 chars are the salt     
-            $theSalt = substr($userHash, 0,2);
-
-            // The remainder is the hash
-            $theHash = substr($userHash, 2);
-
-            // Now we hash the users input                 
-            $testHash = sha1($pwd . $theSalt);
-
-            // Does it match? If not, exit.
-            if ($testHash !== $theHash) {
-                invalid("The user name or password is incorrect.");
-            }
-        } else {
-            invalid("The user name or password is incorrect.");
-        }
-} else {
-        invalid("Connection Failed.");
+	invalidCallback("Invalid end time.");
 }
 
 // Validate user input - maxtxbytes
 // must be an integer between 1000 and 100000000
-$maxtranscriptbytes	= h2s($d[8]);
+$maxtranscriptbytes	= h2s($d[6]);
 if (filter_var($maxtranscriptbytes, FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
-	invalid("Invalid maximum transcript bytes.");
+	invalidCallback("Invalid maximum transcript bytes.");
 }
 
 // Validate user input - sidsrc
 // valid values are: sancp, event, and elsa
-$sidsrc = h2s($d[9]);
+$sidsrc = h2s($d[7]);
 if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
-	invalid("Invalid sidsrc.");
+	invalidCallback("Invalid sidsrc.");
 }
 
 // Validate user input - xscript
 // valid values are: auto, tcpflow, bro, and pcap
-$xscript = h2s($d[10]);
+$xscript = h2s($d[8]);
 if (!( $xscript == 'auto' || $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
-	invalid("Invalid xscript.");
+	invalidCallback("Invalid xscript.");
 }
 
 // Format timestamps
@@ -296,6 +269,9 @@ if ($err == 1) {
 } else {
 
     // We have all the data we need, so pass the parameters to the correct cliscript.
+    $usr     = $_SESSION['sUser'];
+    $pwd     = $_SESSION['sPass'];
+
     $time1 = microtime(true);
     $script = "cliscript.tcl";
     if ($xscript == "bro") {
@@ -309,7 +285,7 @@ if ($err == 1) {
     $foundgzip=0;
     foreach ($raw as $line) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
-		invalid("ERROR: Connection to sguild failed!");
+		invalidCallback("ERROR: Connection to sguild failed!");
 	}
     	if ($xscript == "auto") {
 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
@@ -337,7 +313,7 @@ if ($err == 1) {
     // Check for errors and format as necessary.
     foreach ($raw as $line) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
-		invalid("ERROR: Connection to sguild failed!");
+		invalidCallback("ERROR: Connection to sguild failed!");
 	}
     	// To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
 	$transcriptbytes += strlen($line);

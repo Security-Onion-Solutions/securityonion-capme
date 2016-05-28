@@ -1,5 +1,10 @@
 $(document).ready(function(){
 
+  // Logout
+  $("#logout").click(function(event) {
+    $.get("logout.php?id=0", function(){location.reload()});
+  });
+
     // Force form submit on enter
     document.onkeypress = function (e) {
         if(!e) e=window.event;
@@ -108,22 +113,9 @@ $(document).ready(function(){
 
     // We will fire if we have enough arguments otherwise we wait for a submit
     numArgs = parseInt($("#formargs").val());
-    gotUsr  = $("#username").val().length;
-    gotPwd  = $("#password").val().length;
 
-    if (numArgs == 8) {
+    if (numArgs >= 6) {
         reqCap("posted");
-    }
-
-    // Send focus to credentials if we have some args
-    if (numArgs > 1) {
-        if (gotUsr == 0) {
-            $("#username").focus();
-        } else if (gotPwd == 0) {
-            $("#password").focus();
-        } else {
-            $("#password").focus();
-        }
     }
 
     //Submit form
@@ -159,7 +151,7 @@ $(document).ready(function(){
 	}
 
        frmArgs = $('input[value!=""]').length;
-       if (frmArgs == 19) {
+       if (frmArgs == 17) {
             reqCap("usefrm");
         } else {
             theMsg("Please complete all form fields");
@@ -210,14 +202,10 @@ $(document).ready(function(){
                 bON('.capme_submit');
             }
  
-            // Credentials
-            var usr = s2h($("#username").val());
-            var pwd = s2h($("#password").val());
-
             // Continue if no errors
             if (err == 0) {
             
-                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + maxtx + "-" + sidsrc + "-" + xscript;
+                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + maxtx + "-" + sidsrc + "-" + xscript;
 
                 $(function(){
                     $.get(".inc/callback.php?" + urArgs, function(data){cbtx(data)});

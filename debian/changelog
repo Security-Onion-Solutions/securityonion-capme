@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion48) trusty; urgency=medium
+
+  * Issue 871: CapMe: add session support to avoid re-authenticating every time 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 28 May 2016 02:46:34 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion47) trusty; urgency=medium
 
   * add Max Transcript Bytes to submission form 

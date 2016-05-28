@@ -1,0 +1,885 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion48) trusty; urgency=medium
+ .
+   * Issue 871: CapMe: add session support to avoid re-authenticating every time
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.css/capme.css
++++ securityonion-capme-20121213/capme/.css/capme.css
+@@ -173,6 +173,24 @@ span.capme_close:hover {
+   cursor: pointer
+ }
+ 
++div.user {
++margin-left:10px;
++width:200px;
++margin-top:5px;
++float:left;
++color:#4D5580;
++font-size:11px;
++}
++
++span.logout {
++cursor:pointer;
++margin-left:7px;
++color:#a3a3a3;
++}
++span.logout:hover {
++color:#000;
++}
++
+ .capme_result {
+   display: none;
+ }
+--- /dev/null
++++ securityonion-capme-20121213/capme/.css/login.css
+@@ -0,0 +1,55 @@
++body {
++    background: #d8d8d8;
++    font-family: verdana, trebuchet ms, helvetica, sans;
++}
++td.header {
++    font-size: 10pt;
++    font-weight: normal;
++    padding: 20px 0px 20px 40px;
++    background: #333333;
++    color: #adadad;
++    border-bottom: 1px solid #c4c4c4;
++}
++td.boxes {
++    font-size: .8em;
++    padding: 20px 0px 5px 40px;
++}
++table.boxes {
++    border-collapse: collapse;
++    border: 1pt solid #c4c4c4;
++    background: #ffffff;
++}
++.rb {
++    background: #DDDDDD;
++    color: #000000;
++    border: none;
++    border: 1pt solid gray;
++    font-size: 1em;
++    -webkit-border-radius: 5px;
++    -moz-border-radius: 5px;
++    padding: 10px 20px 10px 20px;
++}
++.rb:hover {
++    background: #ffffff;
++}
++.in {
++    border: 1pt solid #c4c4c4;
++    height: 30px;
++    width: 300px;
++    font-size: 1.5em;
++}
++.err {
++    color: #cc0000;
++    font-size: .8em;
++}
++.cp {
++    font-size: .7em;
++    margin: 0 auto;
++    width: 450px;
++    color: #545454;
++    padding-left: 10px;
++}
++.cp span {
++    float: right;
++    padding-right: 10px;
++}
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -1,14 +1,29 @@
+ <?php
+ 
++// Increase memory limit to allow for large streams
++ini_set('memory_limit', '350M');
++
++// Terminate if this launches without a valid session
++session_start();
++if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
++    header ("Location: session.php?id=0");
++    exit();
++}
++
++
+ include_once 'functions.php';
++
++// record starting time so we can see how long the callback takes
+ $time0 = microtime(true);
+ 
++// check for data
+ if (!isset($_REQUEST['d'])) { 
+     exit;
+ } else { 
+     $d = $_REQUEST['d'];
+ }
+ 
++// pull the individual values out
+ $d = explode("-", $d);
+ 
+ function cleanUp($string) {
+@@ -20,7 +35,7 @@ function cleanUp($string) {
+ }
+ 
+ // If any input validation fails, return error and exit immediately
+-function invalid($string) {
++function invalidCallback($string) {
+ 	$result = array("tx"  => "",
+                   "dbg" => "",
+                   "err" => "$string");
+@@ -53,104 +68,62 @@ function cliscript($cmd, $pwd) {
+ // Validate user input - source IP address
+ $sip	= h2s($d[0]);
+ if (!filter_var($sip, FILTER_VALIDATE_IP)) {
+-	invalid("Invalid source IP.");
++	invalidCallback("Invalid source IP.");
+ }
+ 
+ // Validate user input - source port
+ // must be an integer between 0 and 65535
+ $spt	= h2s($d[1]);
+ if (filter_var($spt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+-	invalid("Invalid source port.");
++	invalidCallback("Invalid source port.");
+ }
+ 
+ // Validate user input - destination IP address
+ $dip	= h2s($d[2]);
+ if (!filter_var($dip, FILTER_VALIDATE_IP)) {
+-	invalid("Invalid destination IP.");
++	invalidCallback("Invalid destination IP.");
+ }
+ 
+ // Validate user input - destination port
+ // must be an integer between 0 and 65535
+ $dpt	= h2s($d[3]);
+ if (filter_var($dpt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+-	invalid("Invalid destination port.");
++	invalidCallback("Invalid destination port.");
+ }
+ 
+ // Validate user input - start time
+ // must be greater than 5 years ago and less than 5 years from today
+ $st_unix= $d[4];
+ if (!( ($st_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($st_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+-	invalid("Invalid start time.");
++	invalidCallback("Invalid start time.");
+ }
+ 
+ // Validate user input - end time
+ // must be greater than 5 years ago and less than 5 years from today
+ $et_unix= $d[5];
+ if (!( ($et_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($et_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+-	invalid("Invalid end time.");
+-}
+-
+-// Validate user input - username
+-// Username must be alphanumeric
+-$usr	= cleanUp(h2s($d[6]));
+-if (!(ctype_alnum($usr))) {
+-	invalid("The user name or password is incorrect.");
+-}
+-
+-// Validate user input - password
+-$pwd	= h2s($d[7]);
+-$username = $password = $err = '';
+-
+-$db = mysql_connect($dbHost,$dbUser,$dbPass);
+-$link = mysql_select_db($dbName, $db);
+-if ($link) {
+-        $query = "SELECT * FROM user_info WHERE username = '$usr'";
+-        $result = mysql_query($query);
+-        $numRows = mysql_num_rows($result);
+-
+-        if ($numRows > 0) {
+-            while ($row = mysql_fetch_row($result)) {
+-                $userHash       = $row[3];
+-            }
+-            // The first 2 chars are the salt     
+-            $theSalt = substr($userHash, 0,2);
+-
+-            // The remainder is the hash
+-            $theHash = substr($userHash, 2);
+-
+-            // Now we hash the users input                 
+-            $testHash = sha1($pwd . $theSalt);
+-
+-            // Does it match? If not, exit.
+-            if ($testHash !== $theHash) {
+-                invalid("The user name or password is incorrect.");
+-            }
+-        } else {
+-            invalid("The user name or password is incorrect.");
+-        }
+-} else {
+-        invalid("Connection Failed.");
++	invalidCallback("Invalid end time.");
+ }
+ 
+ // Validate user input - maxtxbytes
+ // must be an integer between 1000 and 100000000
+-$maxtranscriptbytes	= h2s($d[8]);
++$maxtranscriptbytes	= h2s($d[6]);
+ if (filter_var($maxtranscriptbytes, FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
+-	invalid("Invalid maximum transcript bytes.");
++	invalidCallback("Invalid maximum transcript bytes.");
+ }
+ 
+ // Validate user input - sidsrc
+ // valid values are: sancp, event, and elsa
+-$sidsrc = h2s($d[9]);
++$sidsrc = h2s($d[7]);
+ if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
+-	invalid("Invalid sidsrc.");
++	invalidCallback("Invalid sidsrc.");
+ }
+ 
+ // Validate user input - xscript
+ // valid values are: auto, tcpflow, bro, and pcap
+-$xscript = h2s($d[10]);
++$xscript = h2s($d[8]);
+ if (!( $xscript == 'auto' || $xscript == 'tcpflow' || $xscript == 'bro' || $xscript == 'pcap' )) {
+-	invalid("Invalid xscript.");
++	invalidCallback("Invalid xscript.");
+ }
+ 
+ // Format timestamps
+@@ -296,6 +269,9 @@ if ($err == 1) {
+ } else {
+ 
+     // We have all the data we need, so pass the parameters to the correct cliscript.
++    $usr     = $_SESSION['sUser'];
++    $pwd     = $_SESSION['sPass'];
++
+     $time1 = microtime(true);
+     $script = "cliscript.tcl";
+     if ($xscript == "bro") {
+@@ -309,7 +285,7 @@ if ($err == 1) {
+     $foundgzip=0;
+     foreach ($raw as $line) {
+ 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
+-		invalid("ERROR: Connection to sguild failed!");
++		invalidCallback("ERROR: Connection to sguild failed!");
+ 	}
+     	if ($xscript == "auto") {
+ 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
+@@ -337,7 +313,7 @@ if ($err == 1) {
+     // Check for errors and format as necessary.
+     foreach ($raw as $line) {
+ 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
+-		invalid("ERROR: Connection to sguild failed!");
++		invalidCallback("ERROR: Connection to sguild failed!");
+ 	}
+     	// To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
+ 	$transcriptbytes += strlen($line);
+--- securityonion-capme-20121213.orig/capme/.inc/functions.php
++++ securityonion-capme-20121213/capme/.inc/functions.php
+@@ -17,5 +17,91 @@ function s2h($x) {
+   return($s);
+ }
+ 
++// If any input validation fails, return error and exit immediately
++function invalid($string) {
++        echo $string;
++        exit;
++}
++
++// Argument defaults
++$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
++
++// Argument counters
++$s = 0;
++
++// Validate user input - source IP address - sip
++if (isset($_REQUEST['sip']))      {
++        if (!filter_var($_REQUEST['sip'], FILTER_VALIDATE_IP)) {
++                invalid("Invalid source IP.");
++        } else {
++                $sip    = $_REQUEST['sip'];      $s++;
++        }
++}
++
++// Validate user input - source port - spt
++// must be an integer between 0 and 65535
++if (isset($_REQUEST['spt']))      {
++        if (filter_var($_REQUEST['spt'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
++                invalid("Invalid source port.");
++        } else {
++                $spt    = $_REQUEST['spt'];      $s++;
++        }
++}
++
++// Validate user input - destination IP address - dip
++if (isset($_REQUEST['dip']))      {
++        if (!filter_var($_REQUEST['dip'], FILTER_VALIDATE_IP)) {
++                invalid("Invalid destination IP.");
++        } else {
++                $dip    = $_REQUEST['dip'];      $s++;
++        }
++}
++
++// Validate user input - destination port - dpt
++// must be an integer between 0 and 65535
++if (isset($_REQUEST['dpt']))      {
++        if (filter_var($_REQUEST['dpt'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
++                invalid("Invalid destination port.");
++        } else {
++                $dpt    = $_REQUEST['dpt'];      $s++;
++        }
++}
++
++// Validate user input - start time - stime
++// must be greater than 5 years ago and less than 5 years from today
++if (isset($_REQUEST['stime']))      {
++        if (!( ($_REQUEST['stime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['stime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
++                invalid("Invalid start time.");
++        } else {
++                $stime  = $_REQUEST['stime'];   $s++;
++        }
++}
++
++// Validate user input - end time - etime
++// must be greater than 5 years ago and less than 5 years from today
++if (isset($_REQUEST['etime']))      {
++        if (!( ($_REQUEST['etime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['etime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
++                invalid("Invalid end time.");
++        } else {
++                $etime  = $_REQUEST['etime'];   $s++;
++        }
++}
++
++// Validate user input - max transcript bytes - maxtx
++// must be an integer between 1000 and 100000000 (100MB)
++if (isset($_REQUEST['maxtx']))      {
++        if (filter_var($_REQUEST['maxtx'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
++                invalid("Invalid max transcript bytes.");
++        } else {
++                $maxtx    = $_REQUEST['maxtx'];      $s++;
++        }
++} else {
++        // Default to Max Xscript Bytes of 500,000
++        $maxtx = 500000;
++}
++
++// If all parameters passed validation, then create a $parameters string that can be appended to URL
++$parameters = "sip=" . $sip . "&dip=" . $dip . "&spt=" . $spt . "&dpt=" . $dpt . "&stime=" . $stime . "&etime=" . $etime . "&maxtx=" . $maxtx;
++
+ ?>
+ 
+--- /dev/null
++++ securityonion-capme-20121213/capme/.inc/session.php
+@@ -0,0 +1,70 @@
++<?php
++
++//
++//
++//      Copyright (C) 2016 Paul Halliday <paul.halliday@gmail.com>
++//
++//      This program is free software: you can redistribute it and/or modify
++//      it under the terms of the GNU General Public License as published by
++//      the Free Software Foundation, either version 3 of the License, or
++//      (at your option) any later version.
++//
++//      This program is distributed in the hope that it will be useful,
++//      but WITHOUT ANY WARRANTY; without even the implied warranty of
++//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++//      GNU General Public License for more details.
++//
++//      You should have received a copy of the GNU General Public License
++//      along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++//
++
++include_once 'functions.php';
++
++// Session init
++session_start();
++
++// Define a function to kill the session.
++function sKill($parameters) {
++    // Destroy all data associated with current session.
++    session_destroy();
++    // Free all session variables.
++    session_unset();
++    // Delete PHPSESSID cookie if it exists.
++    if(isset($_COOKIE[session_name()])) {
++    	setcookie(session_name(), "", time() - 7000000);
++    }
++    // Delete capmeid cookie if it exists.
++    if(isset($_COOKIE['capmeid'])) {
++    	setcookie("capmeid", "", time() - 7000000);
++    }
++    // Redirect to the login page.
++    header ("Location: /capme/login.php?" . $parameters);
++    exit();
++}
++
++// Define a function to initiate a session.
++function sInt($parameters) {
++     header ("Location: /capme/login.php?" . $parameters);
++     exit();
++}
++
++if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
++     sKill($parameters);
++}
++
++// Check to see if session variables exist.
++if (!isset($_SESSION['sUser']))    { sInt($parameters);  } else { $sUser    = $_SESSION['sUser'];}
++if (!isset($_SESSION['sPass']))    { sInt($parameters);  } else { $sPass    = $_SESSION['sPass'];}
++if (!isset($_SESSION['sEmail']))   { sInt($parameters);  } else { $sEmail   = $_SESSION['sEmail'];}
++if (!isset($_SESSION['sType']))    { sInt($parameters);  } else { $sType    = $_SESSION['sType'];}
++if (!isset($_SESSION['sTab']))     { sInt($parameters);  } else { $sTab     = $_SESSION['sTab'];}
++if (!isset($_SESSION['tzoffset'])) { sInt($parameters);  } else { $tzoffset = $_SESSION['tzoffset'];}
++
++// Compare the id in the cookie to the id in the session.
++// If they don't match, kill the session.
++if (!isset($_COOKIE['capmeid']))   { sInt($parameters);  } else { $id       = $_COOKIE['capmeid'];}
++if ($id != $_SESSION['id']) {
++    sKill($parameters);
++}
++?>
+--- securityonion-capme-20121213.orig/capme/.js/capme.js
++++ securityonion-capme-20121213/capme/.js/capme.js
+@@ -1,5 +1,10 @@
+ $(document).ready(function(){
+ 
++  // Logout
++  $("#logout").click(function(event) {
++    $.get("logout.php?id=0", function(){location.reload()});
++  });
++
+     // Force form submit on enter
+     document.onkeypress = function (e) {
+         if(!e) e=window.event;
+@@ -108,24 +113,11 @@ $(document).ready(function(){
+ 
+     // We will fire if we have enough arguments otherwise we wait for a submit
+     numArgs = parseInt($("#formargs").val());
+-    gotUsr  = $("#username").val().length;
+-    gotPwd  = $("#password").val().length;
+ 
+-    if (numArgs == 8) {
++    if (numArgs >= 6) {
+         reqCap("posted");
+     }
+ 
+-    // Send focus to credentials if we have some args
+-    if (numArgs > 1) {
+-        if (gotUsr == 0) {
+-            $("#username").focus();
+-        } else if (gotPwd == 0) {
+-            $("#password").focus();
+-        } else {
+-            $("#password").focus();
+-        }
+-    }
+-
+     //Submit form
+     $(".capme_submit").click(function() {
+ 
+@@ -159,7 +151,7 @@ $(document).ready(function(){
+ 	}
+ 
+        frmArgs = $('input[value!=""]').length;
+-       if (frmArgs == 19) {
++       if (frmArgs == 17) {
+             reqCap("usefrm");
+         } else {
+             theMsg("Please complete all form fields");
+@@ -210,14 +202,10 @@ $(document).ready(function(){
+                 bON('.capme_submit');
+             }
+  
+-            // Credentials
+-            var usr = s2h($("#username").val());
+-            var pwd = s2h($("#password").val());
+-
+             // Continue if no errors
+             if (err == 0) {
+             
+-                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + usr + "-" + pwd + "-" + maxtx + "-" + sidsrc + "-" + xscript;
++                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + maxtx + "-" + sidsrc + "-" + xscript;
+ 
+                 $(function(){
+                     $.get(".inc/callback.php?" + urArgs, function(data){cbtx(data)});
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -1,143 +1,16 @@
+ <?php
+-include '.inc/functions.php';
+-// Argument counters
+-$s = 0;
+-
+-// If any input validation fails, return error and exit immediately
+-function invalid($string) {
+-        echo $string;
+-        exit;
+-}
+-
+-// Argument defaults
+-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = '';
+-
+-// Validate user input - source IP address - sip
+-if (isset($_REQUEST['sip']))      { 
+-	if (!filter_var($_REQUEST['sip'], FILTER_VALIDATE_IP)) {
+-        	invalid("Invalid source IP.");
+-	} else {
+-		$sip    = $_REQUEST['sip'];      $s++; 
+-	}
+-}
+-
+-// Validate user input - source port - spt
+-// must be an integer between 0 and 65535
+-if (isset($_REQUEST['spt']))      { 
+-	if (filter_var($_REQUEST['spt'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+-        	invalid("Invalid source port.");
+-	} else {
+-		$spt    = $_REQUEST['spt'];      $s++;
+-	}
+-}
+-
+-// Validate user input - destination IP address - dip
+-if (isset($_REQUEST['dip']))      { 
+-	if (!filter_var($_REQUEST['dip'], FILTER_VALIDATE_IP)) {
+-        	invalid("Invalid destination IP.");
+-	} else {
+-		$dip    = $_REQUEST['dip'];      $s++; 
+-	}
+-}
+-
+-// Validate user input - destination port - dpt
+-// must be an integer between 0 and 65535
+-if (isset($_REQUEST['dpt']))      { 
+-	if (filter_var($_REQUEST['dpt'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>0, "max_range"=>65535))) === false) {
+-        	invalid("Invalid destination port.");
+-	} else {
+-		$dpt    = $_REQUEST['dpt'];      $s++;
+-	}
+-}
+-
+-// Validate user input - start time - stime
+-// must be greater than 5 years ago and less than 5 years from today
+-if (isset($_REQUEST['stime']))      { 
+-	if (!( ($_REQUEST['stime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['stime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
+-        	invalid("Invalid start time.");
+-	} else {
+-		$stime	= $_REQUEST['stime'];	$s++;
+-	}
+-}
+-
+-// Validate user input - end time - etime
+-// must be greater than 5 years ago and less than 5 years from today
+-if (isset($_REQUEST['etime']))      { 
+-	if (!( ($_REQUEST['etime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['etime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
+-        	invalid("Invalid end time.");
+-	} else {
+-		$etime	= $_REQUEST['etime'];	$s++;
+-	}
+-}
+-
+-// Validate user input - username and password
+-if ( isset($_REQUEST['user']) && isset($_REQUEST['password']) )      { 
+-	// Validate user input - username - user
+-	// Username must be alphanumeric
+-	if (!(ctype_alnum($_REQUEST['user']))) {
+-        	invalid("The user name or password is incorrect.");
+-	} else {
+-		$usr	= $_REQUEST['user'];	$s++;
+-	}
+-
+-	// Validate user input - password
+-	$pwd    = $_REQUEST['password'];	$s++;
+-	$db = mysql_connect($dbHost,$dbUser,$dbPass);
+-	$link = mysql_select_db($dbName, $db);
+-	if ($link) {
+-	        $query = "SELECT * FROM user_info WHERE username = '$usr'";
+-        	$result = mysql_query($query);
+-	        $numRows = mysql_num_rows($result);
+-
+-	        if ($numRows > 0) {
+-        	    while ($row = mysql_fetch_row($result)) {
+-                	$userHash       = $row[3];
+-	            }
+-        	    // The first 2 chars are the salt     
+-	            $theSalt = substr($userHash, 0,2);
+-
+-	            // The remainder is the hash
+-        	    $theHash = substr($userHash, 2);
+-
+-	            // Now we hash the users input                 
+-        	    $testHash = sha1($pwd . $theSalt);
+-
+-	            // Does it match? If not, exit.
+-        	    if ($testHash !== $theHash) {
+-                	invalid("The user name or password is incorrect.");
+-	            }
+-        	} else {
+-	            invalid("The user name or password is incorrect.");
+-        	}
+-	} else {
+-        	invalid("Connection Failed.");
+-	}
+-}
+-
+-// Validate user input - max transcript bytes - maxtx
+-// must be an integer between 1000 and 100000000 (100MB)
+-if (isset($_REQUEST['maxtx']))      { 
+-	if (filter_var($_REQUEST['maxtx'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
+-        	invalid("Invalid max transcript bytes.");
+-	} else {
+-		$maxtx    = $_REQUEST['maxtx'];      $s++;
+-	}
+-} else {
+-	// Default to Max Xscript Bytes of 500,000
+-	$maxtx = 500000;
+-}
+ 
+-// If we see a filename parameter, we know the request came from Snorby
+-// and if so we can just query the event table since Snorby just has NIDS alerts
+-// If the referer contains "elsa-query", then it's most likely a Security Onion user 
+-// pivoting from ELSA, so we should query using ELSA.
+-// If all else fails, query sancp.
++include_once '.inc/functions.php';
++include_once '.inc/session.php';
++include_once '.inc/config.php';
++
++// If we see a filename parameter, we know the request came from Snorby/Squert
++// and if so we can just query the event table since they just have NIDS alerts.
++// Otherwise, query elsa by default.
+ if (isset($_REQUEST['filename'])) { 
+     $event = " checked";
+-} elseif ( isset($_SERVER['HTTP_REFERER']) && (strpos($_SERVER['HTTP_REFERER'],"elsa-query") !== false)) {
+-    $elsa  = " checked";
+ } else {
+-    $sancp = " checked";
++    $elsa  = " checked";
+ }
+ 
+ // Default to the "auto" tcpflow/bro transcript option
+@@ -157,6 +30,9 @@ capME!
+ <script type="text/javascript" src=".js/capme.js"></script>
+ </head>
+ <body class=capme_body>
++<div class=top>
++<div id=t_usr class=user data-c_usr=<?php echo $sUser;?>>WELCOME&nbsp;&nbsp;<b><?php echo $sUser;?></b>&nbsp;&nbsp;|<span id=logout class=logout>LOGOUT</span></div>
++<br>
+ 
+ <table class=capme_div align=center cellpadding=0 cellspacing=0>
+ <tr>
+@@ -195,18 +71,6 @@ capME!
+ </tr>
+ 
+ <tr>
+-<td class=capme_left>Username:</td>
+-<td class=capme_right><input type=text maxlength=32 id=username class=capme_selb value="<?php echo $usr;?>" />
+-</td>
+-</tr>
+-
+-<tr>
+-<td class=capme_left>Password:</td>
+-<td class=capme_right><input type=password maxlength=32 id=password class=capme_selb value="<?php echo $pwd;?>" />
+-</td>
+-</tr>
+-
+-<tr>
+ <td class=capme_left>Max Xscript Bytes:</td>
+ <td class=capme_right><input type=text maxlength=32 id=maxtx class=capme_selb value="<?php echo $maxtx;?>" />
+ </td>
+@@ -243,6 +107,7 @@ capME!
+ <input id=formargs type=hidden value="<?php echo $s;?>" />
+ </td>
+ </tr>
++
+ </form>
+ </table>
+ </body>
+--- /dev/null
++++ securityonion-capme-20121213/capme/login.php
+@@ -0,0 +1,151 @@
++<?php
++
++//
++//
++//      Copyright (C) 2016 Paul Halliday <paul.halliday@gmail.com>
++//
++//      This program is free software: you can redistribute it and/or modify
++//      it under the terms of the GNU General Public License as published by
++//      the Free Software Foundation, either version 3 of the License, or
++//      (at your option) any later version.
++//
++//      This program is distributed in the hope that it will be useful,
++//      but WITHOUT ANY WARRANTY; without even the implied warranty of
++//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++//      GNU General Public License for more details.
++//
++//      You should have received a copy of the GNU General Public License
++//      along with this program.  If not, see <http://www.gnu.org/licenses/>.
++//
++//
++
++include_once '.inc/config.php';
++include_once '.inc/functions.php';
++
++$username = $password = $err = '';
++$focus = 'username';
++session_set_cookie_params(0, NULL, NULL, TRUE, TRUE);
++
++function cleanUp($string) {
++    if (get_magic_quotes_gpc()) {
++        $string = stripslashes($string);
++    }
++    $string = mysql_real_escape_string($string);
++    return $string;
++}
++
++if ($_SERVER['REQUEST_METHOD'] == 'POST'){
++    // User submitted credentials.
++    // First, validate the username (alphanumeric only).
++    $username = $_REQUEST['username'];
++    if (!(ctype_alnum($username))) {
++            $err = 'The user name or password is incorrect.';
++            $focus = 'username';     
++    } else {
++	// Now that we've validated that the username is alphanumeric,
++	// we're ready to check the username and password hash in the database.
++	$password = $_REQUEST['password'];
++	$ua       = $_SERVER['HTTP_USER_AGENT'];
++	$rqt      = $_SERVER['REQUEST_TIME'];
++	$rqaddr   = $_SERVER['REMOTE_ADDR'];
++	$max      = mt_getrandmax();
++	$rqt     .= mt_rand(0,$max);
++	$rqaddr  .= mt_rand(0,$max);
++	$ua      .= mt_rand(0,$max);
++	$cmpid    = $rqt . $rqaddr . $ua;
++	$id       = md5($cmpid);
++	$db = mysql_connect($dbHost,$dbUser,$dbPass);
++	$link = mysql_select_db($dbName, $db);
++	if ($link) {
++        	$user = cleanUp($username);
++	        $query = "SELECT * FROM user_info WHERE username = '$user'";
++        	$result = mysql_query($query);
++	        $numRows = mysql_num_rows($result);
++
++        	if ($numRows > 0) {
++	            while ($row = mysql_fetch_row($result)) {
++        	        $userName	= $row[1];
++                	$lastLogin	= $row[2];
++	                $userHash	= $row[3];
++        	        $userEmail      = $row[4];
++                	$userType       = $row[5];
++	                $userTime       = $row[6];
++        	        $tzoffset	= $row[7];
++	            }
++	            // The first 2 chars are the salt     
++        	    $theSalt = substr($userHash, 0,2);
++
++	            // The remainder is the hash
++        	    $theHash = substr($userHash, 2);
++
++	            // Now we hash the users input                 
++        	    $testHash = sha1($password . $theSalt);
++
++	            // Does it match? If yes, start the session.
++        	    if ($testHash === $theHash) {
++                	session_start();
++
++	                // Protect against session fixation attack
++        	        if (!isset($_SESSION['initiated'])) {
++                	    session_regenerate_id();
++	                    $_SESSION['initiated'] = true;
++        	        }
++
++	                $_SESSION['sLogin']	= 1;
++        	        $_SESSION['sUser']	= $userName;
++                	$_SESSION['sPass']	= $password;        
++	                $_SESSION['sEmail']	= $userEmail;
++        	        $_SESSION['sType']      = $userType;
++                	$_SESSION['sTime']	= $userTime;
++	                $_SESSION['tzoffset']   = $tzoffset;
++        	        $_SESSION['sTab']       = 't_sum';
++
++			// Store id in session and cookie to compare later
++        	        $_SESSION['id']       	= $id;
++			setcookie("capmeid", $id, 0, NULL, NULL, TRUE, TRUE);
++                
++			// Redirect to index.php
++		        header ("Location: index.php?" . $parameters);
++        	    } else {
++	                $err = 'The user name or password is incorrect.';
++        	        $focus = 'username';
++	            }
++	        } else {   
++        	    $err = 'The user name or password is incorrect.';
++	            $focus = 'username';     
++        	}
++	    } else {
++        	$err = 'Connection Failed';
++	    }
++	  }
++}
++?>
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
++   "http://www.w3.org/TR/html4/strict.dtd">
++<html>
++<head>
++<title>capME! - Please login to continue</title>
++<style type="text/css" media="screen">@import ".css/login.css";</style>
++<script type="text/javascript" src=".js/jq.js"></script>
++</head>
++<body>
++<form name=credcheck method=post action=login.php?<?php echo $parameters?>>
++<br><br><br><br><br>
++<table class=boxes width=450 align=center cellpadding=1 cellspacing=0>
++<tr><td colspan=2 class=header>
++capME! - Please login to continue</td></tr>
++<tr><td colspan=2 class=boxes>
++Username<br>
++<input class=in type=text name=username value="<?php echo htmlentities($username);?>" maxlength="32"></td></tr>
++<tr><td colspan=2 class=boxes>
++Password<br>
++<input class=in type=password name=password value="" maxlength="32"></td></tr>
++<tr><td class=boxes>
++<input id=logmein name=logmein class=rb type=submit name=login value=submit><br><br></td>
++<td class=err><?php echo $err;?></td></tr>
++</table>
++<div class=cp>Version 1.0.0<span>&copy;2016 Paul Halliday</span></div>
++</form>
++<script type="text/javascript">document.credcheck.<?php echo $focus;?>.focus();</script>
++</body>
++</html>
+--- /dev/null
++++ securityonion-capme-20121213/capme/logout.php
+@@ -0,0 +1,10 @@
++<?php
++
++// session.php contains the sKill function to kill the session
++include_once '.inc/session.php';
++
++// functions.php validates parameters and builds the $parameters string
++include_once '.inc/functions.php';
++
++sKill($parameters);
++?>
