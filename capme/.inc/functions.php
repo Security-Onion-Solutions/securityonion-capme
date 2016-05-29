@@ -24,7 +24,7 @@ function invalid($string) {
 }
 
 // Argument defaults
-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $parameters = '';
+$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $filename = $parameters = '';
 
 // Argument counters
 $s = 0;
@@ -96,13 +96,24 @@ if (isset($_REQUEST['etime']))      {
         }
 }
 
+// Validate user input - filename
+// must be "squert"
+if (isset($_REQUEST['filename']))      {
+        if (!( ($_REQUEST['filename'] == "squert") )) {
+                invalid("Invalid filename.");
+        } else {
+                $filename  = $_REQUEST['filename'];
+		$parameters .= "&filename=" . $filename;
+        }
+}
+
 // Validate user input - max transcript bytes - maxtx
 // must be an integer between 1000 and 100000000 (100MB)
 if (isset($_REQUEST['maxtx']))      {
         if (filter_var($_REQUEST['maxtx'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>1000, "max_range"=>100000000))) === false) {
                 invalid("Invalid max transcript bytes.");
         } else {
-                $maxtx    = $_REQUEST['maxtx'];      $s++;
+                $maxtx    = $_REQUEST['maxtx'];
 		$parameters .= "&maxtx=" . $maxtx;
         }
 } else {

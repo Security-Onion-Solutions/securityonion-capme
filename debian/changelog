@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion51) trusty; urgency=medium
+
+  * include filename parameter for pivoting from Squert 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sun, 29 May 2016 15:32:07 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion50) trusty; urgency=medium
 
   * when querying event table, only look for TCP events (ip_proto=6) 
