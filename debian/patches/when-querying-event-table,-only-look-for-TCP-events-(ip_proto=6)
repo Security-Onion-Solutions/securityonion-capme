@@ -1,0 +1,46 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion50) trusty; urgency=medium
+ .
+   * when querying event table, only look for TCP events (ip_proto=6)
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -218,6 +218,8 @@ if ($sidsrc == "elsa") {
+ Query the Sguil database.
+ If the user selected sancp or event, query those tables and get
+ the 3 pieces of data that we need.
++If the user came from Squert, then we'll query the event table
++and look for ip_proto=6 since we only support TCP right now.
+ */
+ $queries = array(
+                  "elsa" => "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1",
+@@ -235,7 +237,8 @@ $queries = array(
+                              LEFT JOIN sensor ON event.sid = sensor.sid
+                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
+                              WHERE timestamp BETWEEN '$st' AND '$et'
+-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
++                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto=6) OR 
++				(src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=6))
+                              AND s2.agent_type = 'pcap' LIMIT 1");
+ 
+ $response = mysql_query($queries[$sidsrc]);

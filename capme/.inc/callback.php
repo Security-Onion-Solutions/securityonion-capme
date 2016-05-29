@@ -218,6 +218,8 @@ if ($sidsrc == "elsa") {
 Query the Sguil database.
 If the user selected sancp or event, query those tables and get
 the 3 pieces of data that we need.
+If the user came from Squert, then we'll query the event table
+and look for ip_proto=6 since we only support TCP right now.
 */
 $queries = array(
                  "elsa" => "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1",
@@ -235,7 +237,8 @@ $queries = array(
                              LEFT JOIN sensor ON event.sid = sensor.sid
                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
                              WHERE timestamp BETWEEN '$st' AND '$et'
-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
+                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto=6) OR 
+				(src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=6))
                              AND s2.agent_type = 'pcap' LIMIT 1");
 
 $response = mysql_query($queries[$sidsrc]);

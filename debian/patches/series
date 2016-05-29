@@ -37,3 +37,4 @@ remove-unnecessary-delay
 add-Max-Transcript-Bytes-to-submission-form
 -Issue-871:-CapMe:-add-session-support-to-avoid-re-authenticating-every-time
 build-parameters-string-dynamically-to-allow-for-empty-parameters
+when-querying-event-table,-only-look-for-TCP-events-(ip_proto=6)
