@@ -40,3 +40,4 @@ build-parameters-string-dynamically-to-allow-for-empty-parameters
 when-querying-event-table,-only-look-for-TCP-events-(ip_proto=6)
 include-filename-parameter-for-pivoting-from-Squert
 more-informative-error-message-when-failing-on-non-tcp-traffic
+add-check-for-active-pcap_agent-to-functions.php

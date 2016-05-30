@@ -23,6 +23,12 @@ function invalid($string) {
         exit;
 }
 
+// Check for an active pcap_agent
+$response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
+if (mysql_num_rows($response) == 0) {
+    invalid("Error: No active pcap_agent found.  Please ensure that pcap_agent and netsniff-ng are enabled and running.");
+}
+
 // Argument defaults
 $sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $filename = $parameters = '';
 
