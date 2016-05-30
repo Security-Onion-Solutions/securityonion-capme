@@ -305,6 +305,9 @@ if ($err == 1) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalidCallback("ERROR: Connection to sguild failed!");
 	}
+	if (preg_match("/^DEBUG: $/", $line)) {
+		invalidCallback("ERROR: No data was returned. Check pcap_agent service.");
+	}
     	if ($xscript == "auto") {
 		if (preg_match("/^DST: Content-Encoding: gzip/i", $line)) {
 			$foundgzip=1;

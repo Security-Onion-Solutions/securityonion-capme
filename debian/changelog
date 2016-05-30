@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion54) trusty; urgency=medium
+
+  * handle failed pcap_agent more gracefully
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 30 May 2016 19:48:13 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion53) trusty; urgency=medium
 
   * add check for active pcap_agent to functions.php 
