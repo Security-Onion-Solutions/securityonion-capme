@@ -251,10 +251,25 @@ if (!$response) {
     $err = 1;
     $debug = $queries[$sidsrc];
     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
+
+    // check for first possible error condition: no pcap_agent
     $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
     if (mysql_num_rows($response) == 0) {
     $errMsg = "Error: No pcap_agent found";
     }
+	
+    if ($sidsrc == "event") {
+	    // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
+	    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et'
+        	                AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto!=6 ) OR 
+                                (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6 ));");
+	    if (mysql_num_rows($response) == 0) {
+	    	$errMsg = "Failed to find event in event table.";
+	    } else {
+		$errMsg = "Failed to find a matching sid. Not a TCP stream.";
+	    }
+    }
+	
 } else {
     $row = mysql_fetch_assoc($response);
     // If using ELSA, we already set $st and $sensor above so don't overwrite that here.

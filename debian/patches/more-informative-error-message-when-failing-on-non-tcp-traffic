@@ -1,0 +1,53 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion52) trusty; urgency=medium
+ .
+   * more informative error message when failing on non-tcp traffic
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -251,10 +251,25 @@ if (!$response) {
+     $err = 1;
+     $debug = $queries[$sidsrc];
+     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
++
++    // check for first possible error condition: no pcap_agent
+     $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
+     if (mysql_num_rows($response) == 0) {
+     $errMsg = "Error: No pcap_agent found";
+     }
++	
++    if ($sidsrc == "event") {
++	    // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
++	    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et'
++        	                AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto!=6 ) OR 
++                                (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6 ));");
++	    if (mysql_num_rows($response) == 0) {
++	    	$errMsg = "Failed to find event in event table.";
++	    } else {
++		$errMsg = "Failed to find a matching sid. Not a TCP stream.";
++	    }
++    }
++	
+ } else {
+     $row = mysql_fetch_assoc($response);
+     // If using ELSA, we already set $st and $sensor above so don't overwrite that here.

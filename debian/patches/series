@@ -39,3 +39,4 @@ add-Max-Transcript-Bytes-to-submission-form
 build-parameters-string-dynamically-to-allow-for-empty-parameters
 when-querying-event-table,-only-look-for-TCP-events-(ip_proto=6)
 include-filename-parameter-for-pivoting-from-Squert
+more-informative-error-message-when-failing-on-non-tcp-traffic
