@@ -336,6 +336,9 @@ if ($err == 1) {
 	if (preg_match("/^ERROR: Connection failed$/", $line)) {
 		invalidCallback("ERROR: Connection to sguild failed!");
 	}
+	if (preg_match("/^DEBUG: $/", $line)) {
+		invalidCallback("ERROR: No data was returned. Check pcap_agent service.");
+	}
     	// To handle large pcaps more gracefully, we only render the first $maxtranscriptbytes.
 	$transcriptbytes += strlen($line);
 	if ($transcriptbytes <= $maxtranscriptbytes) {

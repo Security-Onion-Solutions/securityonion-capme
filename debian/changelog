@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion55) trusty; urgency=medium
+
+  * handle failed pcap_agent more gracefully in second request 
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 30 May 2016 20:03:09 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion54) trusty; urgency=medium
 
   * handle failed pcap_agent more gracefully
