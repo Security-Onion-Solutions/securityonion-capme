@@ -93,15 +93,17 @@ if (filter_var($dpt, FILTER_VALIDATE_INT, array("options" => array("min_range"=>
 
 // Validate user input - start time
 // must be greater than 5 years ago and less than 5 years from today
+$mintime=time() - 5 * 365 * 24 * 60 * 60;
+$maxtime=time() + 5 * 365 * 24 * 60 * 60;
 $st_unix= $d[4];
-if (!( ($st_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($st_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+if (filter_var($st_unix, FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {
 	invalidCallback("Invalid start time.");
 }
 
 // Validate user input - end time
 // must be greater than 5 years ago and less than 5 years from today
 $et_unix= $d[5];
-if (!( ($et_unix >= (time() - 5 * 365 * 24 * 60 * 60)) && ($et_unix <= time() + 5 * 365 * 24 * 60 * 60) )) {
+if (filter_var($et_unix, FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {
 	invalidCallback("Invalid end time.");
 }
 

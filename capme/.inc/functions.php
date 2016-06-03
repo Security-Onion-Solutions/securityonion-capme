@@ -82,8 +82,10 @@ if (isset($_REQUEST['dpt']))      {
 
 // Validate user input - start time - stime
 // must be greater than 5 years ago and less than 5 years from today
+$mintime=time() - 5 * 365 * 24 * 60 * 60;
+$maxtime=time() + 5 * 365 * 24 * 60 * 60;
 if (isset($_REQUEST['stime']))      {
-        if (!( ($_REQUEST['stime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['stime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
+        if (filter_var($_REQUEST['stime'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {
                 invalid("Invalid start time.");
         } else {
                 $stime  = $_REQUEST['stime'];   $s++;
@@ -94,7 +96,7 @@ if (isset($_REQUEST['stime']))      {
 // Validate user input - end time - etime
 // must be greater than 5 years ago and less than 5 years from today
 if (isset($_REQUEST['etime']))      {
-        if (!( ($_REQUEST['etime'] >= (time() - 5 * 365 * 24 * 60 * 60)) && ($_REQUEST['etime'] <= time() + 5 * 365 * 24 * 60 * 60) )) {
+        if (filter_var($_REQUEST['etime'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {
                 invalid("Invalid end time.");
         } else {
                 $etime  = $_REQUEST['etime'];   $s++;
