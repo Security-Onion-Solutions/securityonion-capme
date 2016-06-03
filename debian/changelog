@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion57) trusty; urgency=medium
+
+  * Issue 934: CapMe: subdirectories should redirect to main page 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 03 Jun 2016 11:25:57 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion56) trusty; urgency=medium
 
   * CapMe: Handle pcaps that generate no p0f output #927 
