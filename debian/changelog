@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion56) trusty; urgency=medium
+
+  * CapMe: Handle pcaps that generate no p0f output #927 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 03 Jun 2016 11:16:08 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion55) trusty; urgency=medium
 
   * handle failed pcap_agent more gracefully in second request 

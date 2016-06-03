@@ -227,7 +227,7 @@ $(document).ready(function(){
                         txt += "</td></tr>";
                         txt += "<tr>";
                         txt += "<td class=capme_text>";
-			if (txResult.indexOf("OS Fingerprint:") >= 0) {
+			if (txResult.indexOf("Dst Port:") >= 0) {
 				txt += txResult;
 			}
                         txt += txDebug;
@@ -238,7 +238,7 @@ $(document).ready(function(){
                         $(".capme_div").hide();
                         $(".capme_result").show();
                         $(".capme_msg").fadeOut('slow');
-			if (txResult.indexOf("OS Fingerprint:") == -1) {
+			if (txResult.indexOf("Dst Port:") == -1) {
 				url = "/capme/pcap/" + txResult;
 				window.open(url, "_self");
 			}
