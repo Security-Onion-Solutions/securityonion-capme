@@ -1,8 +1,8 @@
 <?php
 
-include_once '.inc/functions.php';
-include_once '.inc/session.php';
-include_once '.inc/config.php';
+require_once '.inc/functions.php';
+require_once '.inc/session.php';
+require_once '.inc/config.php';
 
 // If we see a filename parameter, we know the request came from Snorby/Squert
 // and if so we can just query the event table since they just have NIDS alerts.

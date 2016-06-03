@@ -19,8 +19,8 @@
 //
 //
 
-include_once '.inc/config.php';
-include_once '.inc/functions.php';
+require_once '.inc/config.php';
+require_once '.inc/functions.php';
 
 $username = $password = $err = '';
 $focus = 'username';

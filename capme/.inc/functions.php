@@ -1,6 +1,6 @@
 <?php
 
-include_once 'config.php';
+require_once 'config.php';
 global $dbHost,$dbName,$dbUser,$dbPass;
 $db = mysql_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
 mysql_select_db($dbName,$db) or die();

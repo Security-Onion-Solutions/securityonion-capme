@@ -11,7 +11,7 @@ if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
 }
 
 
-include_once 'functions.php';
+require_once 'functions.php';
 
 // record starting time so we can see how long the callback takes
 $time0 = microtime(true);
@@ -45,6 +45,7 @@ function invalidCallback($string) {
 	exit;
 }
 
+// cliscript requests the pcap/transcript from sguild
 function cliscript($cmd, $pwd) {
     $descspec = array(
                  0 => array("pipe", "r"),

@@ -1,0 +1,124 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion59) trusty; urgency=medium
+ .
+   * CapMe: replace include_once with require_once #936
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -11,7 +11,7 @@ if (!(isset($_SESSION['sLogin']) && $_SE
+ }
+ 
+ 
+-include_once 'functions.php';
++require_once 'functions.php';
+ 
+ // record starting time so we can see how long the callback takes
+ $time0 = microtime(true);
+@@ -45,6 +45,7 @@ function invalidCallback($string) {
+ 	exit;
+ }
+ 
++// cliscript requests the pcap/transcript from sguild
+ function cliscript($cmd, $pwd) {
+     $descspec = array(
+                  0 => array("pipe", "r"),
+--- securityonion-capme-20121213.orig/capme/.inc/config.php
++++ securityonion-capme-20121213/capme/.inc/config.php
+@@ -1,12 +1,12 @@
+ <?php
+-// DB Info.
++
++// DB Info
+ $dbHost = '127.0.0.1';
+ $dbName = 'securityonion_db';
+ $dbUser = 'readonly';
+ $dbPass = 'securityonion';
+ 
+ // Sguild Info
+-
+ $sgVer  = "SGUIL-0.9.0 OPENSSL ENABLED";
+ $sgHost = "127.0.0.1";
+ $sgPort = "7734";
+--- securityonion-capme-20121213.orig/capme/.inc/functions.php
++++ securityonion-capme-20121213/capme/.inc/functions.php
+@@ -1,6 +1,6 @@
+ <?php
+ 
+-include_once 'config.php';
++require_once 'config.php';
+ global $dbHost,$dbName,$dbUser,$dbPass;
+ $db = mysql_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
+ mysql_select_db($dbName,$db) or die();
+--- securityonion-capme-20121213.orig/capme/.inc/session.php
++++ securityonion-capme-20121213/capme/.inc/session.php
+@@ -19,7 +19,7 @@
+ //
+ //
+ 
+-include_once 'functions.php';
++require_once 'functions.php';
+ 
+ // Session init
+ session_start();
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -1,8 +1,8 @@
+ <?php
+ 
+-include_once '.inc/functions.php';
+-include_once '.inc/session.php';
+-include_once '.inc/config.php';
++require_once '.inc/functions.php';
++require_once '.inc/session.php';
++require_once '.inc/config.php';
+ 
+ // If we see a filename parameter, we know the request came from Snorby/Squert
+ // and if so we can just query the event table since they just have NIDS alerts.
+--- securityonion-capme-20121213.orig/capme/login.php
++++ securityonion-capme-20121213/capme/login.php
+@@ -19,8 +19,8 @@
+ //
+ //
+ 
+-include_once '.inc/config.php';
+-include_once '.inc/functions.php';
++require_once '.inc/config.php';
++require_once '.inc/functions.php';
+ 
+ $username = $password = $err = '';
+ $focus = 'username';
+--- securityonion-capme-20121213.orig/capme/logout.php
++++ securityonion-capme-20121213/capme/logout.php
+@@ -1,10 +1,10 @@
+ <?php
+ 
+ // session.php contains the sKill function to kill the session
+-include_once '.inc/session.php';
++require_once '.inc/session.php';
+ 
+ // functions.php validates parameters and builds the $parameters string
+-include_once '.inc/functions.php';
++require_once '.inc/functions.php';
+ 
+ sKill($parameters);
+ ?>
