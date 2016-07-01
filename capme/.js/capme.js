@@ -223,7 +223,7 @@ $(document).ready(function(){
                         txt += "<table class=capme_result align=center width=940 cellpadding=0 cellspacing=0>";
                         txt += "<tr>";
                         txt += "<td class=capme_close>";
-                        txt += "<span class=capme_close>close</span>";
+                        txt += "<span class=capme_close_button>close</span>";
                         txt += "</td></tr>";
                         txt += "<tr>";
                         txt += "<td class=capme_text>";
@@ -252,7 +252,7 @@ $(document).ready(function(){
         }
     }
 
-    $(document).on("click", ".capme_close", function() {
+    $(document).on("click", ".capme_close_button", function() {
         $(".capme_result").remove();
         $(".capme_div").show();
         bON('.capme_submit');
