@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion60) trusty; urgency=medium
+
+  * CapMe: only close transcript when 'close' button is clicked #956 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 02 Jul 2016 11:47:55 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion59) trusty; urgency=medium
 
   * CapMe: replace include_once with require_once #936 

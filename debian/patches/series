@@ -47,3 +47,4 @@ CapMe:-Handle-pcaps-that-generate-no-p0f-output-#927
 Issue-934:-CapMe:-subdirectories-should-redirect-to-main-page
 Issue-935:-CapMe:-improve-input-validation-on-stime-and-etime-variables
 CapMe:-replace-include_once-with-require_once-#936
+CapMe:-only-close-transcript-when-'close'-button-is-clicked-#956

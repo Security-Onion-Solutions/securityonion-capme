@@ -1,0 +1,84 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion60) trusty; urgency=medium
+ .
+   * CapMe: only close transcript when 'close' button is clicked #956
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.css/capme.css
++++ securityonion-capme-20121213/capme/.css/capme.css
+@@ -157,7 +157,26 @@ td.capme_close {
+   border-top-right-radius: 5px;
+ }
+ 
+-span.capme_close {
++td.capme_close_button {
++  width: 940px;
++  text-align: right;
++  background: #ffffff;
++  color: #ffffff;
++  font-size: 11px;
++  padding-bottom: 5px;
++  padding-left: 10px;
++  padding-right: 15px;
++  padding-top: 15px;
++  border: 1pt solid #c9c9c9;
++  border-bottom: none;
++  word-wrap: break-word;
++  word-break: break-all;
++  display: inline-block;
++  border-top-left-radius: 5px;
++  border-top-right-radius: 5px;
++}
++
++span.capme_close_button {
+   background-color: #e9e9e9;
+   color: #000000;
+   font-weight: bold;
+@@ -167,7 +186,7 @@ span.capme_close {
+   border-radius: 2px;
+ }
+ 
+-span.capme_close:hover {
++span.capme_close_button:hover {
+   background-color: #ffffff;
+   color: #000000;
+   cursor: pointer
+--- securityonion-capme-20121213.orig/capme/.js/capme.js
++++ securityonion-capme-20121213/capme/.js/capme.js
+@@ -223,7 +223,7 @@ $(document).ready(function(){
+                         txt += "<table class=capme_result align=center width=940 cellpadding=0 cellspacing=0>";
+                         txt += "<tr>";
+                         txt += "<td class=capme_close>";
+-                        txt += "<span class=capme_close>close</span>";
++                        txt += "<span class=capme_close_button>close</span>";
+                         txt += "</td></tr>";
+                         txt += "<tr>";
+                         txt += "<td class=capme_text>";
+@@ -252,7 +252,7 @@ $(document).ready(function(){
+         }
+     }
+ 
+-    $(document).on("click", ".capme_close", function() {
++    $(document).on("click", ".capme_close_button", function() {
+         $(".capme_result").remove();
+         $(".capme_div").show();
+         bON('.capme_submit');
