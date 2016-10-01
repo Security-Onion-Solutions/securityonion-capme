@@ -222,10 +222,18 @@ color:#000;
 }
 
 .txtext_src {
+  display: inline-block;
+  width: inherit;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
   color: #0000ff;
 }
 
 .txtext_dst {
+  display: inline-block;
+  width: inherit;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
   color: #ff0000;
 }
 
