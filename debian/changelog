@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion61) trusty; urgency=medium
+
+  * CapMe: transcript data sometimes overruns the transcript window #1007 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sat, 01 Oct 2016 06:59:20 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion60) trusty; urgency=medium
 
   * CapMe: only close transcript when 'close' button is clicked #956 
