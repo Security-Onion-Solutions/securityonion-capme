@@ -191,8 +191,6 @@ if ($sidsrc == "elsa") {
 		$errMsgELSA = "ELSA couldn't find this session in Bro's conn.log.";
 	} elseif ( $elsa_response_object["recordsReturned"] != "1") {
 		$errMsgELSA = "Invalid results from ELSA API.";
-	} elseif ( $elsa_response_object["results"][0]["_fields"][7]["value"] != "TCP") {
-		$errMsgELSA = "Not a TCP stream.";
 	} else { 
 
 		// Looks good so far, so let's try to parse out the sensor name and timestamp.
@@ -232,16 +230,15 @@ $queries = array(
                              LEFT JOIN sensor ON sancp.sid = sensor.sid
                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
                              WHERE sancp.start_time >=  '$st' AND sancp.end_time <= '$et'
-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
+                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR 
+			     (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
                              AND s2.agent_type = 'pcap' LIMIT 1",
-
                  "event" => "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
                              FROM event
                              LEFT JOIN sensor ON event.sid = sensor.sid
                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
                              WHERE timestamp BETWEEN '$st' AND '$et'
-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto=6) OR 
-				(src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=6))
+                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ))
                              AND s2.agent_type = 'pcap' LIMIT 1");
 
 $response = mysql_query($queries[$sidsrc]);
@@ -260,23 +257,24 @@ if (!$response) {
     if (mysql_num_rows($response) == 0) {
     $errMsg = "Error: No pcap_agent found";
     }
-	
+
     if ($sidsrc == "event") {
-	    // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
-	    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et'
-        	                AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt AND ip_proto!=6 ) OR 
-                                (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6 ));");
-	    if (mysql_num_rows($response) == 0) {
-	    	$errMsg = "Failed to find event in event table.";
-	    } else {
-		$errMsg = "Failed to find a matching sid. Not a TCP stream.";
-	    }
+            // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
+            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+					dst_port = $dpt AND ip_proto!=6) OR (src_ip = INET_ATON('$dip') AND 
+					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6));");
+            if (mysql_num_rows($response) == 0) {
+                $errMsg = "Failed to find event in event table.";
+            }
     }
+
 	
 } else {
     $row = mysql_fetch_assoc($response);
     // If using ELSA, we already set $st and $sensor above so don't overwrite that here.
     if ($sidsrc != "elsa") {
+        $event_foundtcp=1;
         $st = $row["start_time"];
     	$sensor = $row["hostname"]; 
     }
@@ -295,10 +293,33 @@ if ($err == 1) {
 
     $time1 = microtime(true);
     $script = "cliscript.tcl";
-    if ($xscript == "bro") {
-	$script = "cliscriptbro.tcl";
+
+    // We repeat the same query as above, so that we set the UDP flag, where appropriate.
+    if ($sidsrc == "event") {
+            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+					dst_port = $dpt AND ip_proto!=6) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
+					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6));"); 
+	   if (mysql_num_rows($response) == 0) {
+		if ($event_foundtcp != "1")
+		$event_foundudp=0;;
+            } else {
+                $event_foundudp=1;
+            }
     }
-    $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+
+    // If the request came from ELSA, check to see if the result is UDP.
+    if ($sidsrc == "elsa" && $elsa_response_object["results"][0]["_fields"][7]["value"] != "TCP") {
+        $elsa_foundudp=1;
+    }
+    // Choose the correct cliscripti and set proto/params, based on results of previous queries.
+    if ($xscript == "bro" || $elsa_foundudp == "1" || $event_foundudp == "1") {
+	$script = "cliscriptbro.tcl";
+	$proto=17;
+	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
+    } else {
+	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+    }
     $raw = cliscript($cmd, $pwd);
     $time2 = microtime(true);
 
@@ -322,7 +343,8 @@ if ($err == 1) {
 
     // If we found gzip encoding, then request Bro transcript.
     if ($foundgzip==1) {
-    	$cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+	$proto=6;
+        $cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
     }
