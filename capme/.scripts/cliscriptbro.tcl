@@ -35,7 +35,7 @@ if {[file exists $CONFIG]} {
     exit 1
 }
 
-if { $argc == 8 } {
+if { $argc == 9 } {
     set USR [lindex $argv 0]
     set SEN [lindex $argv 1]
     set TS  [lindex $argv 2]
@@ -44,15 +44,16 @@ if { $argc == 8 } {
     set DIP [lindex $argv 5]
     set SPT [lindex $argv 6]
     set DPT [lindex $argv 7]
+    set PROTO [lindex $argv 8]
 } else {
     puts "ERROR: Not enough arguments"
     exit 1
 }
 
-set eventInfo "\"$SEN\" \"$TS\" $SID $SIP $DIP $SPT $DPT"
+set eventInfo "\"$SEN\" \"$TS\" $SID $SIP $DIP $SPT $DPT $PROTO"
 
 # Now verify
-if { ![regexp -expanded { ^\".+\"\s\"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\:\d{2}\"\s\d+\s\d+\.\d+\.\d+\.\d+\s\d+\.\d+\.\d+\.\d+\s\d+\s\d+$ } $eventInfo match] } {
+ if { ![regexp -expanded { ^\".+\"\s\"\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\:\d{2}\"\s\d+\s\d+\.\d+\.\d+\.\d+\s\d+\.\d+\.\d+\.\d+\s\d+\s\d+.\d+$ } $eventInfo match] } {
 
     puts "ERROR: Arguments failed logic tests"
     exit 1
