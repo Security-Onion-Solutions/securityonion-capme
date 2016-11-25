@@ -49,3 +49,4 @@ Issue-935:-CapMe:-improve-input-validation-on-stime-and-etime-variables
 CapMe:-replace-include_once-with-require_once-#936
 CapMe:-only-close-transcript-when-'close'-button-is-clicked-#956
 CapMe:-transcript-data-sometimes-overruns-the-transcript-window-#1007
+CapMe-needs-to-handle-UDP-better-#492

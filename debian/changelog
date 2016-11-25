@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion62) trusty; urgency=medium
+
+  * CapMe needs to handle UDP better #492 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 25 Nov 2016 13:23:13 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion61) trusty; urgency=medium
 
   * CapMe: transcript data sometimes overruns the transcript window #1007 
