@@ -219,8 +219,6 @@ if ($sidsrc == "elsa") {
 Query the Sguil database.
 If the user selected sancp or event, query those tables and get
 the 3 pieces of data that we need.
-If the user came from Squert, then we'll query the event table
-and look for ip_proto=6 since we only support TCP right now.
 */
 $queries = array(
                  "elsa" => "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1",
@@ -262,19 +260,17 @@ if (!$response) {
             // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
             $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
-					dst_port = $dpt AND ip_proto!=6) OR (src_ip = INET_ATON('$dip') AND 
-					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6));");
+					dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND 
+					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ));");
             if (mysql_num_rows($response) == 0) {
                 $errMsg = "Failed to find event in event table.";
             }
     }
-
 	
 } else {
     $row = mysql_fetch_assoc($response);
     // If using ELSA, we already set $st and $sensor above so don't overwrite that here.
     if ($sidsrc != "elsa") {
-        $event_foundtcp=1;
         $st = $row["start_time"];
     	$sensor = $row["hostname"]; 
     }
@@ -287,39 +283,41 @@ if ($err == 1) {
                     "err" => "$errMsg");
 } else {
 
-    // We have all the data we need, so pass the parameters to the correct cliscript.
+    // We passed all error checks, so let's get ready to request the transcript.
+
     $usr     = $_SESSION['sUser'];
     $pwd     = $_SESSION['sPass'];
 
     $time1 = microtime(true);
-    $script = "cliscript.tcl";
 
-    // We repeat the same query as above, so that we set the UDP flag, where appropriate.
+    // The original cliscript.tcl assumes TCP (proto 6).
+    $script = "cliscript.tcl";
+    $proto=6;
+    $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+
+    // If the request came from Squert, check to see if the event is UDP.
     if ($sidsrc == "event") {
             $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
-					dst_port = $dpt AND ip_proto!=6) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
-					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto!=6));"); 
-	   if (mysql_num_rows($response) == 0) {
-		if ($event_foundtcp != "1")
-		$event_foundudp=0;;
-            } else {
-                $event_foundudp=1;
-            }
+					dst_port = $dpt AND ip_proto=17) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
+					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=17));"); 
+	   if (mysql_num_rows($response) > 0) {
+		$proto=17;
+           }
     }
 
-    // If the request came from ELSA, check to see if the result is UDP.
-    if ($sidsrc == "elsa" && $elsa_response_object["results"][0]["_fields"][7]["value"] != "TCP") {
-        $elsa_foundudp=1;
-    }
-    // Choose the correct cliscripti and set proto/params, based on results of previous queries.
-    if ($xscript == "bro" || $elsa_foundudp == "1" || $event_foundudp == "1") {
-	$script = "cliscriptbro.tcl";
+    // If the request came from ELSA, check to see if the event is UDP.
+    if ($sidsrc == "elsa" && $elsa_response_object["results"][0]["_fields"][7]["value"] == "UDP") {
 	$proto=17;
-	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
-    } else {
-	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
     }
+
+    // If the traffic is UDP or the user chose the Bro transcript, change to cliscriptbro.tcl.
+    if ($xscript == "bro" || $proto == "17" ) {
+	$script = "cliscriptbro.tcl";
+	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
+    }
+
+    // Request the transcript.
     $raw = cliscript($cmd, $pwd);
     $time2 = microtime(true);
 
@@ -341,9 +339,8 @@ if ($err == 1) {
     }
     $time3 = microtime(true);
 
-    // If we found gzip encoding, then request Bro transcript.
+    // If we found gzip encoding, then switch to Bro transcript.
     if ($foundgzip==1) {
-	$proto=6;
         $cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
@@ -353,7 +350,7 @@ if ($err == 1) {
     $raw = cliscript($cmd, $pwd);
     $time4 = microtime(true);
 
-    // Initialize $transcriptbytes so we can count the number of bytes in the transcript
+    // Initialize $transcriptbytes so we can count the number of bytes in the transcript.
     $transcriptbytes=0;
 
     // Check for errors and format as necessary.
