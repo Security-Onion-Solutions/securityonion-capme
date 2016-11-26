@@ -191,6 +191,8 @@ if ($sidsrc == "elsa") {
 		$errMsgELSA = "ELSA couldn't find this session in Bro's conn.log.";
 	} elseif ( $elsa_response_object["recordsReturned"] != "1") {
 		$errMsgELSA = "Invalid results from ELSA API.";
+        } elseif ( !in_array($elsa_response_object["results"][0]["_fields"][7]["value"], array('TCP','UDP'), TRUE)) {
+                $errMsgELSA = "CapMe currently only supports TCP and UDP.";
 	} else { 
 
 		// Looks good so far, so let's try to parse out the sensor name and timestamp.
@@ -250,14 +252,14 @@ if (!$response) {
     $debug = $queries[$sidsrc];
     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
 
-    // check for first possible error condition: no pcap_agent
+    // Check for first possible error condition: no pcap_agent.
     $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
     if (mysql_num_rows($response) == 0) {
     $errMsg = "Error: No pcap_agent found";
     }
 
+    // Second possible error condition: event not in event table.
     if ($sidsrc == "event") {
-            // we couldn't find the event using a strict tcp query above, so check to see if it's non-tcp
             $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
 					dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND 
