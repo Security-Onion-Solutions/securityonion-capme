@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion65) trusty; urgency=medium
+
+  * bump version number to 1.0.1 
+
+ -- Doug Burks <doug.burks@gmail.com>  Sun, 27 Nov 2016 09:47:59 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion64) trusty; urgency=medium
 
   * additional error handling 

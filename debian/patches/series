@@ -52,3 +52,4 @@ CapMe:-transcript-data-sometimes-overruns-the-transcript-window-#1007
 CapMe-needs-to-handle-UDP-better-#492
 fix-Bro-transcript-to-allow-both-TCP-and-UDP
 additional-error-handling
+bump-version-number-to-1.0.1
