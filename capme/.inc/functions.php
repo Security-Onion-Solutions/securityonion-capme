@@ -2,8 +2,8 @@
 
 require_once 'config.php';
 global $dbHost,$dbName,$dbUser,$dbPass;
-$db = mysql_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
-mysql_select_db($dbName,$db) or die();
+$db = mysqli_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
+mysqli_select_db($db,$dbName) or die();
 
 function h2s($x) {
   $s='';
@@ -24,19 +24,25 @@ function invalid($string) {
 }
 
 // Check for an active pcap_agent
-$response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
-if (mysql_num_rows($response) == 0) {
+$response = mysqli_query($db,"select * from sensor where agent_type='pcap' and active='Y';");
+if (mysqli_num_rows($response) == 0) {
     invalid("Error: No active pcap_agent found.  Please ensure that pcap_agent and netsniff-ng are enabled and running.");
 }
 
 // Argument defaults
-$sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $filename = $parameters = '';
+$esid = $sip = $spt = $dip = $dpt = $stime = $etime = $usr = $pwd = $sancp = $event = $elsa = $bro = $tcpflow = $pcap = $maxtx = $filename = $parameters = '';
 
 // Argument counters
 $s = 0;
 
 // Check each potential search parameter to see if it exists and if it's valid.
 // If valid, increment $s and add the search parameter to the $parameters string.
+
+// Validate user input - id
+if (isset($_REQUEST['esid']))      {
+                $esid    = $_REQUEST['esid'];      $s++;
+		$parameters .= "&esid=" . $esid;
+}
 
 // Validate user input - source IP address - sip
 if (isset($_REQUEST['sip']))      {

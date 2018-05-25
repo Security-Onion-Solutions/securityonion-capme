@@ -1,0 +1,682 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion67) xenial; urgency=medium
+ .
+   * move files from elastic package
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback-elastic.php
++++ securityonion-capme-20121213/capme/.inc/callback-elastic.php
+@@ -469,12 +469,12 @@ if ($errMsgElastic != "") {
+ } else {
+ 	// Query the Sguil database.
+ 	$query = "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1";
+-	$response = mysqli_query($db,$query);
++	$response = mysql_query($query);
+ 	if (!$response) {
+ 	    $err = 1;
+ 	    $errMsg = "Error: The query failed, please verify database connectivity";
+ 	    $debug = $query;
+-	} else if (mysqli_num_rows($response) == 0) {
++	} else if (mysql_num_rows($response) == 0) {
+ 	    $err = 1;
+ 	    $debug = $query;
+ 	    $errMsg = "Failed to find a matching sid. " . $errMsgElastic;
+@@ -485,7 +485,7 @@ if ($errMsgElastic != "") {
+ 		    $errMsg = "Error: No pcap_agent found";
+ 	    }
+ 	} else {
+-	    $row = mysqli_fetch_assoc($response);
++	    $row = mysql_fetch_assoc($response);
+ 	    $sid    = $row["sid"];
+ 	    $err = 0;
+ 	}
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -3,13 +3,14 @@
+ // Increase memory limit to allow for large streams
+ ini_set('memory_limit', '350M');
+ 
++/*
+ // Terminate if this launches without a valid session
+ session_start();
+ if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
+     header ("Location: session.php?id=0");
+     exit();
+ }
+-
++*/
+ 
+ require_once 'functions.php';
+ 
+@@ -116,9 +117,9 @@ if (filter_var($maxtranscriptbytes, FILT
+ }
+ 
+ // Validate user input - sidsrc
+-// valid values are: sancp, event, and elsa
++// event is the only valid value
+ $sidsrc = h2s($d[7]);
+-if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
++if ( $sidsrc != 'event' ) {
+ 	invalidCallback("Invalid sidsrc.");
+ }
+ 
+@@ -162,94 +163,29 @@ sid	- sensor id
+ */
+ 
+ $sensor = "";
+-if ($sidsrc == "elsa") {
+-
+-	/*
+-	If ELSA is enabled, then we need to:
+-	- construct the ELSA query and submit it via cli.sh
+-	- receive the response and parse out the sensor name (HOSTNAME-INTERFACE) and timestamp
+-	- convert the timestamp to the proper format
+-	NOTE: This requires that ELSA has access to Bro conn.log AND that the conn.log 
+-	has been extended to include the sensor name (HOSTNAME-INTERFACE).
+-	*/
+-
+-	// Construct the ELSA query.
+-	$elsa_query = "class=bro_conn start:'$st_unix' end:'$et_unix' +$sip +$spt +$dip +$dpt limit:1 timeout:0";
+-
+-	// Submit the ELSA query via cli.sh.
+-	// TODO: have PHP connect directly to ELSA API without shell_exec
+-	$elsa_command = "sh /opt/elsa/contrib/securityonion/contrib/cli.sh '$elsa_query' ";
+-	$elsa_response = shell_exec($elsa_command);
+-
+-	// Try to decode the response as JSON.
+-	$elsa_response_object = json_decode($elsa_response, true);
+-
+-	// Check for common error conditions.
+-	if (json_last_error() !== JSON_ERROR_NONE) { 
+-		$errMsgELSA = "Couldn't decode JSON from ELSA API.";
+-	} elseif ( $elsa_response_object["recordsReturned"] == "0") {
+-		$errMsgELSA = "ELSA couldn't find this session in Bro's conn.log.";
+-	} elseif ( $elsa_response_object["recordsReturned"] != "1") {
+-		$errMsgELSA = "Invalid results from ELSA API.";
+-        } elseif ( !in_array($elsa_response_object["results"][0]["_fields"][7]["value"], array('TCP','UDP'), TRUE)) {
+-                $errMsgELSA = "CapMe currently only supports TCP and UDP.";
+-	} else { 
+-
+-		// Looks good so far, so let's try to parse out the sensor name and timestamp.
+-
+-		// Pull the raw log out of the response object.
+-		$elsa_response_data_raw_log = $elsa_response_object["results"][0]["msg"];
+-
+-		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name.
+-		$pieces = explode("|", $elsa_response_data_raw_log);
+-		$elsa_response_data_raw_log_timestamp = $pieces[0];
+-		$elsa_response_data_raw_log_sensor = end($pieces);
+-
+-		// Convert timestamp to proper format.
+-		$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
+-
+-		// Clean up $sensor.
+-		$sensor = rtrim($elsa_response_data_raw_log_sensor);
+-
+-	} 
+-
+-	// We now have 2 of the 3 pieces of data that we need.
+-	// Next, we'll use $sensor to look up the $sid in Sguil's sensor table.
+-}
+ 
+ /*
+ Query the Sguil database.
+ If the user selected sancp or event, query those tables and get
+ the 3 pieces of data that we need.
+ */
+-$queries = array(
+-                 "elsa" => "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1",
+-
+-                 "sancp" => "SELECT sancp.start_time, s2.sid, s2.hostname
+-                             FROM sancp
+-                             LEFT JOIN sensor ON sancp.sid = sensor.sid
+-                             LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
+-                             WHERE sancp.start_time >=  '$st' AND sancp.end_time <= '$et'
+-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR 
+-			     (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
+-                             AND s2.agent_type = 'pcap' LIMIT 1",
+-                 "event" => "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
++$query = "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
+                              FROM event
+                              LEFT JOIN sensor ON event.sid = sensor.sid
+                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
+                              WHERE timestamp BETWEEN '$st' AND '$et'
+                              AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ))
+-                             AND s2.agent_type = 'pcap' LIMIT 1");
++                             AND s2.agent_type = 'pcap' LIMIT 1";
+ 
+-$response = mysql_query($queries[$sidsrc]);
++$response = mysql_query($query);
+ 
+ if (!$response) {
+     $err = 1;
+     $errMsg = "Error: The query failed, please verify database connectivity";
+-    $debug = $queries[$sidsrc];
++    $debug = $query;
+ } else if (mysql_num_rows($response) == 0) {
+     $err = 1;
+-    $debug = $queries[$sidsrc];
++    $debug = $query;
+     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
+ 
+     // Check for first possible error condition: no pcap_agent.
+@@ -259,23 +195,18 @@ if (!$response) {
+     }
+ 
+     // Second possible error condition: event not in event table.
+-    if ($sidsrc == "event") {
+-            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
++    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+ 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+ 					dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND 
+ 					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ));");
+-            if (mysql_num_rows($response) == 0) {
+-                $errMsg = "Failed to find event in event table.";
+-            }
++    if (mysql_num_rows($response) == 0) {
++              $errMsg = "Failed to find event in event table.";
+     }
+ 	
+ } else {
+     $row = mysql_fetch_assoc($response);
+-    // If using ELSA, we already set $st and $sensor above so don't overwrite that here.
+-    if ($sidsrc != "elsa") {
+-        $st = $row["start_time"];
+-    	$sensor = $row["hostname"]; 
+-    }
++    $st = $row["start_time"];
++    $sensor = $row["hostname"]; 
+     $sid    = $row["sid"];
+ }
+ 
+@@ -287,8 +218,8 @@ if ($err == 1) {
+ 
+     // We passed all error checks, so let's get ready to request the transcript.
+ 
+-    $usr     = $_SESSION['sUser'];
+-    $pwd     = $_SESSION['sPass'];
++    $usr     = $_SERVER['PHP_AUTH_USER'];
++    $pwd     = $_SERVER['PHP_AUTH_PW'];
+ 
+     $time1 = microtime(true);
+ 
+@@ -297,20 +228,13 @@ if ($err == 1) {
+     $proto=6;
+     $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+ 
+-    // If the request came from Squert, check to see if the event is UDP.
+-    if ($sidsrc == "event") {
+-            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
++    // check to see if the event is UDP.
++    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+ 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+ 					dst_port = $dpt AND ip_proto=17) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
+ 					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=17));"); 
+-	   if (mysql_num_rows($response) > 0) {
++    if (mysql_num_rows($response) > 0) {
+ 		$proto=17;
+-           }
+-    }
+-
+-    // If the request came from ELSA, check to see if the event is UDP.
+-    if ($sidsrc == "elsa" && $elsa_response_object["results"][0]["_fields"][7]["value"] == "UDP") {
+-	$proto=17;
+     }
+ 
+     // If the traffic is UDP or the user chose the Bro transcript, change to cliscriptbro.tcl.
+@@ -430,7 +354,7 @@ if ($err == 1) {
+ 
+     // Add query and timer information to debug section.
+     $debug = "<br>" . $debug;
+-    $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
++    $debug .= "<span class=txtext_qry>QUERY: " . $query . "</span>";
+     $time5 = microtime(true);
+     $alltimes  = number_format(($time1 - $time0), 2) . " ";
+     $alltimes .= number_format(($time2 - $time1), 2) . " ";
+--- securityonion-capme-20121213.orig/capme/.inc/functions.php
++++ securityonion-capme-20121213/capme/.inc/functions.php
+@@ -2,8 +2,8 @@
+ 
+ require_once 'config.php';
+ global $dbHost,$dbName,$dbUser,$dbPass;
+-$db = mysqli_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
+-mysqli_select_db($db, $dbName) or die();
++$db = mysql_connect($dbHost,$dbUser,$dbPass) or die(mysql_error());
++mysql_select_db($dbName,$db) or die();
+ 
+ function h2s($x) {
+   $s='';
+@@ -24,8 +24,8 @@ function invalid($string) {
+ }
+ 
+ // Check for an active pcap_agent
+-$response = mysqli_query($db,"select * from sensor where agent_type='pcap' and active='Y';");
+-if (mysqli_num_rows($response) == 0) {
++$response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
++if (mysql_num_rows($response) == 0) {
+     invalid("Error: No active pcap_agent found.  Please ensure that pcap_agent and netsniff-ng are enabled and running.");
+ }
+ 
+--- securityonion-capme-20121213.orig/capme/.js/capme.js
++++ securityonion-capme-20121213/capme/.js/capme.js
+@@ -2,7 +2,7 @@ $(document).ready(function(){
+ 
+   // Logout
+   $("#logout").click(function(event) {
+-    $.get("logout.php?id=0", function(){location.reload()});
++    $.get("/logout.html", function(){location.reload()});
+   });
+ 
+     // Force form submit on enter
+@@ -151,7 +151,7 @@ $(document).ready(function(){
+ 	}
+ 
+        frmArgs = $('input[value!=""]').length;
+-       if (frmArgs == 17) {
++       if (frmArgs == 14) {
+             reqCap("usefrm");
+         } else {
+             theMsg("Please complete all form fields");
+@@ -170,7 +170,7 @@ $(document).ready(function(){
+             var xscript = s2h($('input:radio[name=xscript]:checked').val());
+ 
+             // SID Source
+-            var sidsrc = s2h($('input:radio[name=sidsrc]:checked').val());
++            var sidsrc = s2h("event");
+ 
+             // IPs and ports
+             var sip = s2h(chkIP($("#sip").val()));
+--- /dev/null
++++ securityonion-capme-20121213/capme/.js/elastic.js
+@@ -0,0 +1,221 @@
++$(document).ready(function(){
++
++  // Logout
++  $("#logout").click(function(event) {
++    $.get("/logout.html", function(){location.reload()});
++  });
++
++    // Force form submit on enter
++    document.onkeypress = function (e) {
++        if(!e) e=window.event;
++        key = e.keyCode ? e.keyCode : e.which;
++        if(key == 13) {
++            $(".capme_submit").click();
++        }
++    }
++
++    var loaderImg = "<img id=loader class=loader src=\".css/load.gif\">";
++    var err = 0;
++    
++    $(".capme_body").fadeIn('slow');
++
++    //Check if browser is Chrome/Chromium-based.  If so, hide checkboxes and placeholders.
++    var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
++    if (!(is_chrome)){
++       $("#stime_checkbox").hide();
++       $("#etime_checkbox").hide();
++       $("#stime").attr('placeholder', '');
++       $("#etime").attr('placeholder', '');
++    }
++
++    // We will fire if we have enough arguments otherwise we wait for a submit
++    numArgs = parseInt($("#formargs").val());
++
++    if (numArgs >= 1) {
++        reqCap("posted");
++    }
++
++    //Submit form
++    $(".capme_submit").click(function() {
++
++       frmArgs = $('input[value!=""]').length;
++       if (frmArgs == 7) {
++            reqCap("usefrm");
++        } else {
++            theMsg("Please complete all form fields");
++        }
++    });
++
++    // Gather and validate our values then send off to callback
++    function reqCap(caller) {
++
++        if ($(".capme_submit").html() == "submit") {
++
++            bOFF('.capme_submit');
++            theMsg("Sending request..");
++
++		// esid
++		var esid = s2h(($("#esid").val()));
++
++            // Transcript
++            var xscript = s2h($('input:radio[name=xscript]:checked').val());
++
++            // SID Source
++            var sidsrc = s2h("elastic");
++
++	    // Max TX
++            var maxtx = s2h(chkMaxTX($("#maxtx").val()));
++
++            // Continue if no errors
++            if (err == 0) {
++            
++                var urArgs = "d=" + esid + "-" + maxtx + "-" + sidsrc + "-" + xscript;
++
++                $(function(){
++                    $.get(".inc/callback-elastic.php?" + urArgs, function(data){cbtx(data)});
++                });
++                        
++                function cbtx(data){
++                    eval("txRaw=" + data);
++                    
++                    txResult = txRaw.tx;
++                    txDebug  = txRaw.dbg;
++                    txError  = txRaw.err;
++
++                    if (txResult != 0) {
++                        var txt = '';
++                        txt += "<table class=capme_result align=center width=940 cellpadding=0 cellspacing=0>";
++                        txt += "<tr>";
++                        txt += "<td class=capme_close>";
++                        txt += "<span class=capme_close_button>close</span>";
++                        txt += "</td></tr>";
++                        txt += "<tr>";
++                        txt += "<td class=capme_text>";
++			if (txResult.indexOf("Dst Port:") >= 0) {
++				txt += txResult;
++			}
++                        txt += txDebug;
++                        txt += txError;
++                        txt += "</td></tr></table>";
++                        $(".capme_div").after(txt);
++                        theMsg("Request was successful");
++                        $(".capme_div").hide();
++                        $(".capme_result").show();
++                        $(".capme_msg").fadeOut('slow');
++			if (txResult.indexOf("Dst Port:") == -1) {
++				url = "/capme/pcap/" + txResult;
++				window.open(url, "_self");
++			}
++                    } else {
++                        theMsg(txError);
++                    }
++                    
++                    bON('.capme_submit');
++                }
++            }
++        }
++    }
++
++    $(document).on("click", ".capme_close_button", function() {
++        $(".capme_result").remove();
++        $(".capme_div").show();
++        bON('.capme_submit');
++    });
++
++    function theMsg(msg) {
++        $(".capme_msg").hide()
++        $(".capme_msg").text(msg);
++        $(".capme_msg").fadeIn('slow');
++    }
++
++    function bON(btn) {
++        $(btn).attr('disabled',false);
++        $(btn).css('cursor','pointer');
++        $(btn).html('submit');    
++    }
++
++    function bOFF(btn) {
++        $(btn).attr('disabled',true);
++        $(btn).html(loaderImg);
++    }
++
++    // IP validation
++    function chkIP(ip) {
++        var valid = /^\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/;
++        if (!valid.test(ip)) {
++            theMsg("Error: Bad IP");
++            bON('.capme_submit');
++            err = 1;
++        } else {
++            return ip;
++        }
++    }
++
++    // maxtx validation
++    function chkMaxTX(maxtx) {
++        var valid = /^[0-9]+$\b/;
++        if (!valid.test(maxtx) || maxtx < 1000 || maxtx > 100000000 || maxtx.charAt(0) == 0) {
++            theMsg("Error: Bad MaxTX");
++            bON('.capme_submit');
++            err = 1;
++        } else {
++            return maxtx;
++        } 
++    }
++
++    // port validation
++    function chkPort(port) {
++        var valid = /^[0-9]+$\b/;
++        if (!valid.test(port) || port > 65535 || port.charAt(0) == 0) {
++            theMsg("Error: Bad Port");
++            bON('.capme_submit');
++            err = 1;
++        } else {
++            return port;
++        } 
++    }
++
++    // date validation
++    function chkDate(stamp) {
++        var n = 0;
++        var chk1 = /^\d{10}$\b/;
++        if (chk1.test(stamp)) {
++            n++;
++            var unixTime = parseInt(stamp)
++        }
++        if (n == 0) {
++            theMsg("Error: Bad Timestamp");
++            bON('.capme_submit');
++            err = 1;
++        } else {
++            return unixTime;
++        } 
++    }
++
++    function d2h(d) {
++        return d.toString(16);
++    }
++
++    function h2d (h) {
++        return parseInt(h, 16);
++    }
++
++    function s2h (tmp) {
++        var str = '', i = 0, tmp_len = tmp.length, c;
++
++        for (; i < tmp_len; i += 1) {
++            c = tmp.charCodeAt(i);
++            str += d2h(c);
++        }
++        return str;
++    }
++
++    function h2s (tmp) {
++        var arr = tmp.split(' '), str = '', i = 0, arr_len = arr.length, c;
++        for (; i < arr_len; i += 1) {
++            c = String.fromCharCode( h2d( arr[i] ) );
++            str += c;
++        }
++        return str;
++    }
++});
+--- /dev/null
++++ securityonion-capme-20121213/capme/elastic.php
+@@ -0,0 +1,75 @@
++<?php
++
++require_once '.inc/functions.php';
++//require_once '.inc/session.php';
++require_once '.inc/config.php';
++
++// Default to the "auto" tcpflow/bro transcript option
++$auto = " checked";
++
++?>
++
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
++   "http://www.w3.org/TR/html4/strict.dtd">
++<html>
++<head>
++<title>
++capME!
++</title>
++<style type="text/css" media="screen">@import ".css/capme.css";</style>
++<script type="text/javascript" src=".js/jq.js"></script>
++<script type="text/javascript" src=".js/elastic.js"></script>
++</head>
++<body class=capme_body>
++<div class=top>
++<a href="/logout.html">Logout</a>
++<br>
++
++<table class=capme_div align=center cellpadding=0 cellspacing=0>
++<tr>
++<td colspan=2 class=capme_logo>
++<h2><span class=capme_l1>cap</span><span class=capme_l2>ME!</span></h2>
++</td>
++</tr>
++<form name=capme_form>
++
++<tr>
++<td class=capme_left>ID:</td>
++<td class=capme_right>
++<input type=text maxlength=20 id=esid class=capme_selb value="<?php echo $esid;?>" /> 
++</td>
++</tr>
++
++<tr>
++<td class=capme_left>Max Xscript Bytes:</td>
++<td class=capme_right><input type=text maxlength=32 id=maxtx class=capme_selb value="<?php echo $maxtx;?>" />
++</td>
++</tr>
++
++<tr>
++<td class=capme_left>Output:</td>
++<td class=capme_right>
++<input type=radio name=xscript class=capme_rad value="auto"<?php echo $auto;?>>auto
++<input type=radio name=xscript class=capme_rad value="tcpflow"<?php echo $tcpflow;?>>tcpflow
++<input type=radio name=xscript class=capme_rad value="bro"<?php echo $bro;?>>bro
++<input type=radio name=xscript class=capme_rad value="pcap"<?php echo $pcap;?>>pcap
++</td>
++</tr>
++
++<tr>
++<td colspan=2 class=capme_msg_cont>
++<span class=capme_msg></span>
++</td>
++</tr>
++
++<tr>
++<td colspan=2 class=capme_button>
++<div class=capme_submit>submit</div>
++<input id=formargs type=hidden value="<?php echo $s;?>" />
++</td>
++</tr>
++
++</form>
++</table>
++</body>
++</html>
+--- securityonion-capme-20121213.orig/capme/index.php
++++ securityonion-capme-20121213/capme/index.php
+@@ -1,18 +1,9 @@
+ <?php
+ 
+ require_once '.inc/functions.php';
+-require_once '.inc/session.php';
++//require_once '.inc/session.php';
+ require_once '.inc/config.php';
+ 
+-// If we see a filename parameter, we know the request came from Snorby/Squert
+-// and if so we can just query the event table since they just have NIDS alerts.
+-// Otherwise, query elsa by default.
+-if (isset($_REQUEST['filename'])) { 
+-    $event = " checked";
+-} else {
+-    $elsa  = " checked";
+-}
+-
+ // Default to the "auto" tcpflow/bro transcript option
+ $auto = " checked";
+ 
+@@ -31,7 +22,7 @@ capME!
+ </head>
+ <body class=capme_body>
+ <div class=top>
+-<div id=t_usr class=user data-c_usr=<?php echo $sUser;?>>WELCOME&nbsp;&nbsp;<b><?php echo $sUser;?></b>&nbsp;&nbsp;|<span id=logout class=logout>LOGOUT</span></div>
++<a href="/logout.html">Logout</a>
+ <br>
+ 
+ <table class=capme_div align=center cellpadding=0 cellspacing=0>
+@@ -76,15 +67,6 @@ capME!
+ </td>
+ </tr>
+ 
+-<tr>
+-<td class=capme_left>Sid Source:</td>
+-<td class=capme_right>
+-<input type=radio name=sidsrc class=capme_rad value="sancp"<?php echo $sancp;?>>sancp
+-<input type=radio name=sidsrc class=capme_rad value="event"<?php echo $event;?>>event
+-<input type=radio name=sidsrc class=capme_rad value="elsa"<?php echo $elsa;?>>elsa
+-</td>
+-</tr>
+-
+ <tr>
+ <td class=capme_left>Output:</td>
+ <td class=capme_right>
+--- securityonion-capme-20121213.orig/capme/login.php
++++ securityonion-capme-20121213/capme/login.php
+@@ -104,8 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'
+         	        $_SESSION['id']       	= $id;
+ 			setcookie("capmeid", $id, 0, NULL, NULL, TRUE, TRUE);
+                 
+-			// Redirect to index.php
+-		        header ("Location: index.php?" . $parameters);
++			// Redirect to desired page
++			if ( $esid != "") {
++			        header ("Location: elastic.php?" . $parameters);
++			} else {
++			        header ("Location: index.php?" . $parameters);
++			}
+         	    } else {
+ 	                $err = 'The user name or password is incorrect.';
+         	        $focus = 'username';
+@@ -144,7 +148,7 @@ Password<br>
+ <input id=logmein name=logmein class=rb type=submit name=login value=submit><br><br></td>
+ <td class=err><?php echo $err;?></td></tr>
+ </table>
+-<div class=cp>Version 1.0.1<span>&copy;2016 Paul Halliday</span></div>
++<div class=cp>Version 1.0.2<span>&copy;2016 Paul Halliday</span></div>
+ </form>
+ <script type="text/javascript">document.credcheck.<?php echo $focus;?>.focus();</script>
+ </body>

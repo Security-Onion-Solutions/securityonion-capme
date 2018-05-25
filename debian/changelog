@@ -1,3 +1,33 @@
+securityonion-capme (20121213-0ubuntu0securityonion70) xenial; urgency=medium
+
+  * Issue 1202: CapMe: purge pcap symlinks older than 24 hours 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 25 May 2018 08:08:45 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion69) xenial; urgency=medium
+
+  * fix more mysql calls 
+
+ -- Doug Burks <doug.burks@gmail.com>  Thu, 03 May 2018 10:14:07 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion68) xenial; urgency=medium
+
+  * fix mysql calls again 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 02 May 2018 13:58:15 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion67) xenial; urgency=medium
+
+  * move files from elastic package 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 02 May 2018 13:41:05 -0400
+
+securityonion-capme (20121213-0ubuntu0securityonion66) xenial; urgency=medium
+
+  * fix mysql calls and rebuild for xenial 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 01 May 2018 17:53:14 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion65) trusty; urgency=medium
 
   * bump version number to 1.0.1 

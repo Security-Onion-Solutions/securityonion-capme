@@ -104,8 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         	        $_SESSION['id']       	= $id;
 			setcookie("capmeid", $id, 0, NULL, NULL, TRUE, TRUE);
                 
-			// Redirect to index.php
-		        header ("Location: index.php?" . $parameters);
+			// Redirect to desired page
+			if ( $esid != "") {
+			        header ("Location: elastic.php?" . $parameters);
+			} else {
+			        header ("Location: index.php?" . $parameters);
+			}
         	    } else {
 	                $err = 'The user name or password is incorrect.';
         	        $focus = 'username';
@@ -144,7 +148,7 @@ Password<br>
 <input id=logmein name=logmein class=rb type=submit name=login value=submit><br><br></td>
 <td class=err><?php echo $err;?></td></tr>
 </table>
-<div class=cp>Version 1.0.1<span>&copy;2016 Paul Halliday</span></div>
+<div class=cp>Version 1.0.2<span>&copy;2016 Paul Halliday</span></div>
 </form>
 <script type="text/javascript">document.credcheck.<?php echo $focus;?>.focus();</script>
 </body>

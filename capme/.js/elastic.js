@@ -28,130 +28,18 @@ $(document).ready(function(){
        $("#etime").attr('placeholder', '');
     }
 
-    //Set tooltip for checkboxes
-    $("#stime_checkbox").attr("title", "Convert to date/time format");
-    $("#etime_checkbox").attr("title", "Convert to date/time format");
-
-    //Set checkbox value based on user input
-    //When we lose focus of start time input, set checkbox value
-    $("#stime").blur(function() {
-
-    var stimeBlur = $("#stime").val();
-    var stimeFmt = "-";
-
-        if (stimeBlur.indexOf(stimeFmt) >=0){
-	    $("#stime_checkbox").prop('checked', true);
-            $("#stime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-	    $("#stime_checkbox").prop('checked', false);
-            $("#stime_checkbox").attr("title", "Convert to date/time format");
-	}
-    });
-
-    //When we lose focus of end time input, set checkbox value
-    $("#etime").blur(function() {
-
-    var etimeBlur = $("#etime").val();
-    var etimeFmt = "-";
-
-	if (etimeBlur.indexOf(etimeFmt) >=0){
-            $("#etime_checkbox").prop('checked', true);
-            $("#etime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-	    $("#etime_checkbox").prop('checked', false);
-            $("#etime_checkbox").attr("title", "Convert to date/time format");
-	}
-    });
-
-    //Create toggle for start time checkbox
-    $("#stime_checkbox").click(function() {
-
-	if ($("#stime_checkbox").prop("checked")){
-            //Get value of start time from input and convert it to human-readable date/time
-            var stimeChkd = $("#stime").val();
-            var stime_to_ISO = new Date(stimeChkd*1000).toISOString().slice(0,-5).replace('T',' ');
-
-            $("#stime").val(stime_to_ISO);
-	    $("#stime_checkbox").attr("title", "Convert to epoch format");
-	}
-	else{
-            //Get start time and convert it to epoch timestamp
-            var stimeUnChkd = $("#stime").val();
-            var startDate = new Date(stimeUnChkd);
-            var start_tz_offset = (startDate.getTimezoneOffset());
-            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
-
-            $("#stime").val(stimeConverted);
-            $("#stime_checkbox").attr("title", "Convert to date/time format");
-        }
-    });
-
-    //Create toggle for end time checkbox
-    $("#etime_checkbox").click(function() {
-
-	if ($("#etime_checkbox").prop("checked")){
-	    //Get value of start time from input and convert it to human-readable date/time
-            var etimeChkd = $("#etime").val();
-            var etime_to_ISO = new Date(etimeChkd*1000).toISOString().slice(0,-5).replace('T',' ');
-
-            $("#etime").val(etime_to_ISO);
-            $("#etime_checkbox").attr("title", "Convert to epoch format");
-        }
-	else{
-	    //Get start time and convert it to epoch timestamp
-            var etimeUnChkd = $("#etime").val();
-            var endDate = new Date(etimeUnChkd);
-            var end_tz_offset = (endDate.getTimezoneOffset());
-            var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
-
-	    $("#etime").val(etimeConverted);
-            $("#etime_checkbox").attr("title", "Convert to date/time format");
-        }
-    });
-
     // We will fire if we have enough arguments otherwise we wait for a submit
     numArgs = parseInt($("#formargs").val());
 
-    if (numArgs >= 6) {
+    if (numArgs >= 1) {
         reqCap("posted");
     }
 
     //Submit form
     $(".capme_submit").click(function() {
 
-	$("#stime_checkbox").prop('checked', false);
-        $("#etime_checkbox").prop('checked', false);
-
-        //Get start time value
-        var stime = $("#stime").val();
-        var stimeSyntax = ":";
-
-        //If start time value contains stimeSyntax, then convert date to epoch timestamp.
-        if (stime.indexOf(stimeSyntax) >=0) {
-	    var startDate = new Date(stime);
-            var start_tz_offset = (startDate.getTimezoneOffset());
-            var stimeConverted = startDate.setTime( startDate.getTime()/1000-(start_tz_offset*60) );
-
-            $("#stime").val(stimeConverted);
-        }
-
-        //Get end time value
-        var etime = $("#etime").val();
-        var etimeSyntax = ":";
-
-        //If end time value contains etimeSyntax, then convert date to epoch timestamp.
-        if (etime.indexOf(etimeSyntax) >=0) {
-	    var endDate = new Date(etime);
-            var end_tz_offset = (endDate.getTimezoneOffset());
-            var etimeConverted = endDate.setTime( endDate.getTime()/1000-(end_tz_offset*60) );
-
-	    $("#etime").val(etimeConverted);
-	}
-
        frmArgs = $('input[value!=""]').length;
-       if (frmArgs == 14) {
+       if (frmArgs == 7) {
             reqCap("usefrm");
         } else {
             theMsg("Please complete all form fields");
@@ -166,49 +54,25 @@ $(document).ready(function(){
             bOFF('.capme_submit');
             theMsg("Sending request..");
 
+		// esid
+		var esid = s2h(($("#esid").val()));
+
             // Transcript
             var xscript = s2h($('input:radio[name=xscript]:checked').val());
 
             // SID Source
-            var sidsrc = s2h("event");
-
-            // IPs and ports
-            var sip = s2h(chkIP($("#sip").val()));
-            var spt = s2h(chkPort($("#spt").val()));
-            var dip = s2h(chkIP($("#dip").val()));
-            var dpt = s2h(chkPort($("#dpt").val()));
+            var sidsrc = s2h("elastic");
 
 	    // Max TX
             var maxtx = s2h(chkMaxTX($("#maxtx").val()));
 
-            // Timestamps
-            if ($("#stime").val().length > 0) {
-                var st = chkDate($("#stime").val());
-                if (err == 0) {
-                    $("#stime").val(st);
-                }
-            }
-
-            if ($("#etime").val().length > 0) {
-                var et = chkDate($("#etime").val());
-                if (err == 0) {
-                    $("#etime").val(et);
-                }
-            } 
-
-            if (st > et) {
-                err = 1;
-                theMsg("Error: Start Time is greater than End Time!");
-                bON('.capme_submit');
-            }
- 
             // Continue if no errors
             if (err == 0) {
             
-                var urArgs = "d=" + sip + "-" + spt + "-" + dip + "-" + dpt + "-" + st + "-" + et + "-" + maxtx + "-" + sidsrc + "-" + xscript;
+                var urArgs = "d=" + esid + "-" + maxtx + "-" + sidsrc + "-" + xscript;
 
                 $(function(){
-                    $.get(".inc/callback.php?" + urArgs, function(data){cbtx(data)});
+                    $.get(".inc/callback-elastic.php?" + urArgs, function(data){cbtx(data)});
                 });
                         
                 function cbtx(data){

@@ -1,0 +1,83 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion69) xenial; urgency=medium
+ .
+   * fix more mysql calls
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback.php
++++ securityonion-capme-20121213/capme/.inc/callback.php
+@@ -177,34 +177,34 @@ $query = "SELECT event.timestamp AS star
+                              AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ))
+                              AND s2.agent_type = 'pcap' LIMIT 1";
+ 
+-$response = mysql_query($query);
++$response = mysqli_query($db, $query);
+ 
+ if (!$response) {
+     $err = 1;
+     $errMsg = "Error: The query failed, please verify database connectivity";
+     $debug = $query;
+-} else if (mysql_num_rows($response) == 0) {
++} else if (mysqli_num_rows($response) == 0) {
+     $err = 1;
+     $debug = $query;
+     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
+ 
+     // Check for first possible error condition: no pcap_agent.
+-    $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
+-    if (mysql_num_rows($response) == 0) {
++    $response = mysqli_query($db, "select * from sensor where agent_type='pcap' and active='Y';");
++    if (mysqli_num_rows($response) == 0) {
+     $errMsg = "Error: No pcap_agent found";
+     }
+ 
+     // Second possible error condition: event not in event table.
+-    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
++    $response = mysqli_query($db, "select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+ 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+ 					dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND 
+ 					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ));");
+-    if (mysql_num_rows($response) == 0) {
++    if (mysqli_num_rows($response) == 0) {
+               $errMsg = "Failed to find event in event table.";
+     }
+ 	
+ } else {
+-    $row = mysql_fetch_assoc($response);
++    $row = mysqli_fetch_assoc($response);
+     $st = $row["start_time"];
+     $sensor = $row["hostname"]; 
+     $sid    = $row["sid"];
+@@ -229,11 +229,11 @@ if ($err == 1) {
+     $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+ 
+     // check to see if the event is UDP.
+-    $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
++    $response = mysqli_query($db, "select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+ 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
+ 					dst_port = $dpt AND ip_proto=17) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
+ 					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=17));"); 
+-    if (mysql_num_rows($response) > 0) {
++    if (mysqli_num_rows($response) > 0) {
+ 		$proto=17;
+     }
+ 

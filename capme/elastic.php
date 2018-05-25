@@ -18,7 +18,7 @@ capME!
 </title>
 <style type="text/css" media="screen">@import ".css/capme.css";</style>
 <script type="text/javascript" src=".js/jq.js"></script>
-<script type="text/javascript" src=".js/capme.js"></script>
+<script type="text/javascript" src=".js/elastic.js"></script>
 </head>
 <body class=capme_body>
 <div class=top>
@@ -34,31 +34,10 @@ capME!
 <form name=capme_form>
 
 <tr>
-<td class=capme_left>Src IP / Port:</td>
+<td class=capme_left>ID:</td>
 <td class=capme_right>
-<input type=text maxlength=15 id=sip class=capme_selb value="<?php echo $sip;?>" /> /
-<input type=text maxlength=5 id=spt class=capme_sels value="<?php echo $spt;?>" />
+<input type=text maxlength=20 id=esid class=capme_selb value="<?php echo $esid;?>" /> 
 </td>
-</tr>
-
-<tr>
-<td class=capme_left>Dst IP / Port:</td>
-<td class=capme_right>
-<input type=text maxlength=15 id=dip class=capme_selb value="<?php echo $dip;?>" /> /
-<input type=text maxlength=5 id=dpt class=capme_sels value="<?php echo $dpt;?>" />
-</td>
-</tr>
-
-<tr>
-<td class=capme_left>Start Time:</td>
-<td class=capme_right><input type=text maxlength=19 id=stime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $stime;?>" />
-<input type=checkbox id=stime_checkbox /></td>
-</tr>
-
-<tr>
-<td class=capme_left>End Time:</td>
-<td class=capme_right><input type=text maxlength=19 id=etime class=capme_selb placeholder="YYYY-MM-DD HH:MM:SS" value="<?php echo $etime;?>" />
-<input type=checkbox id=etime_checkbox /></td>
 </tr>
 
 <tr>

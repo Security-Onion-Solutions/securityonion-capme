@@ -3,13 +3,14 @@
 // Increase memory limit to allow for large streams
 ini_set('memory_limit', '350M');
 
+/*
 // Terminate if this launches without a valid session
 session_start();
 if (!(isset($_SESSION['sLogin']) && $_SESSION['sLogin'] != '')) {
     header ("Location: session.php?id=0");
     exit();
 }
-
+*/
 
 require_once 'functions.php';
 
@@ -116,9 +117,9 @@ if (filter_var($maxtranscriptbytes, FILTER_VALIDATE_INT, array("options" => arra
 }
 
 // Validate user input - sidsrc
-// valid values are: sancp, event, and elsa
+// event is the only valid value
 $sidsrc = h2s($d[7]);
-if (!( $sidsrc == 'sancp' || $sidsrc == 'event' || $sidsrc == 'elsa' )) {
+if ( $sidsrc != 'event' ) {
 	invalidCallback("Invalid sidsrc.");
 }
 
@@ -162,120 +163,50 @@ sid	- sensor id
 */
 
 $sensor = "";
-if ($sidsrc == "elsa") {
-
-	/*
-	If ELSA is enabled, then we need to:
-	- construct the ELSA query and submit it via cli.sh
-	- receive the response and parse out the sensor name (HOSTNAME-INTERFACE) and timestamp
-	- convert the timestamp to the proper format
-	NOTE: This requires that ELSA has access to Bro conn.log AND that the conn.log 
-	has been extended to include the sensor name (HOSTNAME-INTERFACE).
-	*/
-
-	// Construct the ELSA query.
-	$elsa_query = "class=bro_conn start:'$st_unix' end:'$et_unix' +$sip +$spt +$dip +$dpt limit:1 timeout:0";
-
-	// Submit the ELSA query via cli.sh.
-	// TODO: have PHP connect directly to ELSA API without shell_exec
-	$elsa_command = "sh /opt/elsa/contrib/securityonion/contrib/cli.sh '$elsa_query' ";
-	$elsa_response = shell_exec($elsa_command);
-
-	// Try to decode the response as JSON.
-	$elsa_response_object = json_decode($elsa_response, true);
-
-	// Check for common error conditions.
-	if (json_last_error() !== JSON_ERROR_NONE) { 
-		$errMsgELSA = "Couldn't decode JSON from ELSA API.";
-	} elseif ( $elsa_response_object["recordsReturned"] == "0") {
-		$errMsgELSA = "ELSA couldn't find this session in Bro's conn.log.";
-	} elseif ( $elsa_response_object["recordsReturned"] != "1") {
-		$errMsgELSA = "Invalid results from ELSA API.";
-        } elseif ( !in_array($elsa_response_object["results"][0]["_fields"][7]["value"], array('TCP','UDP'), TRUE)) {
-                $errMsgELSA = "CapMe currently only supports TCP and UDP.";
-	} else { 
-
-		// Looks good so far, so let's try to parse out the sensor name and timestamp.
-
-		// Pull the raw log out of the response object.
-		$elsa_response_data_raw_log = $elsa_response_object["results"][0]["msg"];
-
-		// Explode the pipe-delimited raw log and pull out the original timestamp and sensor name.
-		$pieces = explode("|", $elsa_response_data_raw_log);
-		$elsa_response_data_raw_log_timestamp = $pieces[0];
-		$elsa_response_data_raw_log_sensor = end($pieces);
-
-		// Convert timestamp to proper format.
-		$st = date("Y-m-d H:i:s", $elsa_response_data_raw_log_timestamp);
-
-		// Clean up $sensor.
-		$sensor = rtrim($elsa_response_data_raw_log_sensor);
-
-	} 
-
-	// We now have 2 of the 3 pieces of data that we need.
-	// Next, we'll use $sensor to look up the $sid in Sguil's sensor table.
-}
 
 /*
 Query the Sguil database.
 If the user selected sancp or event, query those tables and get
 the 3 pieces of data that we need.
 */
-$queries = array(
-                 "elsa" => "SELECT sid FROM sensor WHERE hostname='$sensor' AND agent_type='pcap' LIMIT 1",
-
-                 "sancp" => "SELECT sancp.start_time, s2.sid, s2.hostname
-                             FROM sancp
-                             LEFT JOIN sensor ON sancp.sid = sensor.sid
-                             LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
-                             WHERE sancp.start_time >=  '$st' AND sancp.end_time <= '$et'
-                             AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt) OR 
-			     (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt))
-                             AND s2.agent_type = 'pcap' LIMIT 1",
-                 "event" => "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
+$query = "SELECT event.timestamp AS start_time, s2.sid, s2.hostname
                              FROM event
                              LEFT JOIN sensor ON event.sid = sensor.sid
                              LEFT JOIN sensor AS s2 ON sensor.net_name = s2.net_name
                              WHERE timestamp BETWEEN '$st' AND '$et'
                              AND ((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ))
-                             AND s2.agent_type = 'pcap' LIMIT 1");
+                             AND s2.agent_type = 'pcap' LIMIT 1";
 
-$response = mysql_query($queries[$sidsrc]);
+$response = mysqli_query($db, $query);
 
 if (!$response) {
     $err = 1;
     $errMsg = "Error: The query failed, please verify database connectivity";
-    $debug = $queries[$sidsrc];
-} else if (mysql_num_rows($response) == 0) {
+    $debug = $query;
+} else if (mysqli_num_rows($response) == 0) {
     $err = 1;
-    $debug = $queries[$sidsrc];
+    $debug = $query;
     $errMsg = "Failed to find a matching sid. " . $errMsgELSA;
 
     // Check for first possible error condition: no pcap_agent.
-    $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
-    if (mysql_num_rows($response) == 0) {
+    $response = mysqli_query($db, "select * from sensor where agent_type='pcap' and active='Y';");
+    if (mysqli_num_rows($response) == 0) {
     $errMsg = "Error: No pcap_agent found";
     }
 
     // Second possible error condition: event not in event table.
-    if ($sidsrc == "event") {
-            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+    $response = mysqli_query($db, "select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
 					dst_port = $dpt ) OR (src_ip = INET_ATON('$dip') AND 
 					src_port = $dpt AND dst_ip = INET_ATON('$sip') AND dst_port = $spt ));");
-            if (mysql_num_rows($response) == 0) {
-                $errMsg = "Failed to find event in event table.";
-            }
+    if (mysqli_num_rows($response) == 0) {
+              $errMsg = "Failed to find event in event table.";
     }
 	
 } else {
-    $row = mysql_fetch_assoc($response);
-    // If using ELSA, we already set $st and $sensor above so don't overwrite that here.
-    if ($sidsrc != "elsa") {
-        $st = $row["start_time"];
-    	$sensor = $row["hostname"]; 
-    }
+    $row = mysqli_fetch_assoc($response);
+    $st = $row["start_time"];
+    $sensor = $row["hostname"]; 
     $sid    = $row["sid"];
 }
 
@@ -287,8 +218,8 @@ if ($err == 1) {
 
     // We passed all error checks, so let's get ready to request the transcript.
 
-    $usr     = $_SESSION['sUser'];
-    $pwd     = $_SESSION['sPass'];
+    $usr     = $_SERVER['PHP_AUTH_USER'];
+    $pwd     = $_SERVER['PHP_AUTH_PW'];
 
     $time1 = microtime(true);
 
@@ -297,20 +228,13 @@ if ($err == 1) {
     $proto=6;
     $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
 
-    // If the request came from Squert, check to see if the event is UDP.
-    if ($sidsrc == "event") {
-            $response = mysql_query("select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
+    // check to see if the event is UDP.
+    $response = mysqli_query($db, "select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
 					((src_ip = INET_ATON('$sip') AND src_port = $spt AND dst_ip = INET_ATON('$dip') AND 
 					dst_port = $dpt AND ip_proto=17) OR (src_ip = INET_ATON('$dip') AND src_port = $dpt AND 
 					dst_ip = INET_ATON('$sip') AND dst_port = $spt AND ip_proto=17));"); 
-	   if (mysql_num_rows($response) > 0) {
+    if (mysqli_num_rows($response) > 0) {
 		$proto=17;
-           }
-    }
-
-    // If the request came from ELSA, check to see if the event is UDP.
-    if ($sidsrc == "elsa" && $elsa_response_object["results"][0]["_fields"][7]["value"] == "UDP") {
-	$proto=17;
     }
 
     // If the traffic is UDP or the user chose the Bro transcript, change to cliscriptbro.tcl.
@@ -430,7 +354,7 @@ if ($err == 1) {
 
     // Add query and timer information to debug section.
     $debug = "<br>" . $debug;
-    $debug .= "<span class=txtext_qry>QUERY: " . $queries[$sidsrc] . "</span>";
+    $debug .= "<span class=txtext_qry>QUERY: " . $query . "</span>";
     $time5 = microtime(true);
     $alltimes  = number_format(($time1 - $time0), 2) . " ";
     $alltimes .= number_format(($time2 - $time1), 2) . " ";
