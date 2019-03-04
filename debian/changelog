@@ -1,3 +1,15 @@
+securityonion-capme (20121213-0ubuntu0securityonion72) xenial; urgency=medium
+
+  * securityonion-capme: allow start time to go back 50 years in callback.php Security-Onion-Solutions/security-onion#1473
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 04 Mar 2019 17:10:34 -0500
+
+securityonion-capme (20121213-0ubuntu0securityonion71) xenial; urgency=medium
+
+  * version 1.1.0 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 25 May 2018 08:36:02 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion70) xenial; urgency=medium
 
   * Issue 1202: CapMe: purge pcap symlinks older than 24 hours 
