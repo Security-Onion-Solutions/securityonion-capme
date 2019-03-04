@@ -1,0 +1,38 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion73) xenial; urgency=medium
+ .
+   * securityonion-capme: allow start time to go back 50 years in callback.php Security-Onion-Solutions/security-onion#1473
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/functions.php
++++ securityonion-capme-20121213/capme/.inc/functions.php
+@@ -87,8 +87,8 @@ if (isset($_REQUEST['dpt']))      {
+ }
+ 
+ // Validate user input - start time - stime
+-// must be greater than 5 years ago and less than 5 years from today
+-$mintime=time() - 5 * 365 * 24 * 60 * 60;
++// must be greater than 50 years ago and less than 5 years from today
++$mintime=time() - 50 * 365 * 24 * 60 * 60;
+ $maxtime=time() + 5 * 365 * 24 * 60 * 60;
+ if (isset($_REQUEST['stime']))      {
+         if (filter_var($_REQUEST['stime'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {

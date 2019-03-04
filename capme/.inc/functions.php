@@ -87,8 +87,8 @@ if (isset($_REQUEST['dpt']))      {
 }
 
 // Validate user input - start time - stime
-// must be greater than 5 years ago and less than 5 years from today
-$mintime=time() - 5 * 365 * 24 * 60 * 60;
+// must be greater than 50 years ago and less than 5 years from today
+$mintime=time() - 50 * 365 * 24 * 60 * 60;
 $maxtime=time() + 5 * 365 * 24 * 60 * 60;
 if (isset($_REQUEST['stime']))      {
         if (filter_var($_REQUEST['stime'], FILTER_VALIDATE_INT, array("options" => array("min_range"=>$mintime, "max_range"=>$maxtime))) === false) {

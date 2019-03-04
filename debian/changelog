@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion73) xenial; urgency=medium
+
+  * securityonion-capme: allow start time to go back 50 years in callback.php Security-Onion-Solutions/security-onion#1473 
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 04 Mar 2019 17:19:30 -0500
+
 securityonion-capme (20121213-0ubuntu0securityonion72) xenial; urgency=medium
 
   * securityonion-capme: allow start time to go back 50 years in callback.php Security-Onion-Solutions/security-onion#1473
