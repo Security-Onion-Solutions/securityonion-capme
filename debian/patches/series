@@ -61,3 +61,4 @@ Issue-1202:-CapMe:-purge-pcap-symlinks-older-than-24-hours
 version-1.1.0
 securityonion-capme:-allow-start-time-to-go-back-50-years-in-callback.php-Security-Onion-Solutionssecurity-onion#1473
 securityonion-capme:-allow-start-time-to-go-back-50-years-in-callback.php-Security-Onion-Solutionssecurity-onion#1473-2
+securityonion-capme:-update-mysql-calls-Security-Onion-Solutionssecurity-onion#1479

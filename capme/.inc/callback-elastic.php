@@ -480,8 +480,8 @@ if ($errMsgElastic != "") {
 	    $errMsg = "Failed to find a matching sid. " . $errMsgElastic;
 
 	    // Check for possible error condition: no pcap_agent.
-	    $response = mysql_query("select * from sensor where agent_type='pcap' and active='Y';");
-	    if (mysql_num_rows($response) == 0) {
+	    $response = mysqli_query("select * from sensor where agent_type='pcap' and active='Y';");
+	    if (mysqli_num_rows($response) == 0) {
 		    $errMsg = "Error: No pcap_agent found";
 	    }
 	} else {

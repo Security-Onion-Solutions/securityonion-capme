@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion74) xenial; urgency=medium
+
+  * securityonion-capme: update mysql calls Security-Onion-Solutions/security-onion#1479 
+
+ -- Doug Burks <doug.burks@gmail.com>  Mon, 11 Mar 2019 09:49:10 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion73) xenial; urgency=medium
 
   * securityonion-capme: allow start time to go back 50 years in callback.php Security-Onion-Solutions/security-onion#1473 
