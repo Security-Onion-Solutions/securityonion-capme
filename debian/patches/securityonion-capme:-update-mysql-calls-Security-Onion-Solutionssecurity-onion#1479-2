@@ -1,0 +1,36 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ securityonion-capme (20121213-0ubuntu0securityonion75) xenial; urgency=medium
+ .
+   * securityonion-capme: update mysql calls Security-Onion-Solutions/security-onion#1479
+Author: Doug Burks <doug.burks@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- securityonion-capme-20121213.orig/capme/.inc/callback-elastic.php
++++ securityonion-capme-20121213/capme/.inc/callback-elastic.php
+@@ -480,7 +480,7 @@ if ($errMsgElastic != "") {
+ 	    $errMsg = "Failed to find a matching sid. " . $errMsgElastic;
+ 
+ 	    // Check for possible error condition: no pcap_agent.
+-	    $response = mysqli_query("select * from sensor where agent_type='pcap' and active='Y';");
++	    $response = mysqli_query($db,"select * from sensor where agent_type='pcap' and active='Y';");
+ 	    if (mysqli_num_rows($response) == 0) {
+ 		    $errMsg = "Error: No pcap_agent found";
+ 	    }
