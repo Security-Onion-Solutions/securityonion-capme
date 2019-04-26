@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion76) xenial; urgency=medium
+
+  * update callback.php 
+
+ -- Doug Burks <doug.burks@gmail.com>  Fri, 26 Apr 2019 13:06:01 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion75) xenial; urgency=medium
 
   * securityonion-capme: update mysql calls Security-Onion-Solutions/security-onion#1479 

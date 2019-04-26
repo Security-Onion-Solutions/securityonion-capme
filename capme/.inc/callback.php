@@ -226,7 +226,15 @@ if ($err == 1) {
     // The original cliscript.tcl assumes TCP (proto 6).
     $script = "cliscript.tcl";
     $proto=6;
-    $cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt";
+    $cmdusr     = escapeshellarg($usr);
+    $cmdsensor  = escapeshellarg($sensor);
+    $cmdst      = escapeshellarg($st);
+    $cmdsid     = escapeshellarg($sid);
+    $cmdsip     = escapeshellarg($sip);
+    $cmddip     = escapeshellarg($dip);
+    $cmdspt     = escapeshellarg($spt);
+    $cmddpt     = escapeshellarg($dpt);
+    $cmd = "../.scripts/$script $cmdusr $cmdsensor $cmdst $cmdsid $cmdsip $cmddip $cmdspt $cmddpt";
 
     // check to see if the event is UDP.
     $response = mysqli_query($db, "select * from event WHERE timestamp BETWEEN '$st' AND '$et' AND 
@@ -240,7 +248,7 @@ if ($err == 1) {
     // If the traffic is UDP or the user chose the Bro transcript, change to cliscriptbro.tcl.
     if ($xscript == "bro" || $proto == "17" ) {
 	$script = "cliscriptbro.tcl";
-	$cmd = "../.scripts/$script \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
+        $cmd = "../.scripts/$script $cmdusr $cmdsensor $cmdst $cmdsid $cmdsip $cmddip $cmdspt $cmddpt $cmdproto";
     }
 
     // Request the transcript.
@@ -267,7 +275,7 @@ if ($err == 1) {
 
     // If we found gzip encoding, then switch to Bro transcript.
     if ($foundgzip==1) {
-        $cmd = "../.scripts/cliscriptbro.tcl \"$usr\" \"$sensor\" \"$st\" $sid $sip $dip $spt $dpt $proto";
+        $cmd = "../.scripts/cliscriptbro.tcl $cmdusr $cmdsensor $cmdst $cmdsid $cmdsip $cmddip $cmdspt $cmddpt $cmdproto";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";
     }
