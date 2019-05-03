@@ -248,6 +248,7 @@ if ($err == 1) {
     // If the traffic is UDP or the user chose the Bro transcript, change to cliscriptbro.tcl.
     if ($xscript == "bro" || $proto == "17" ) {
 	$script = "cliscriptbro.tcl";
+	$cmdproto       = escapeshellarg($proto);
         $cmd = "../.scripts/$script $cmdusr $cmdsensor $cmdst $cmdsid $cmdsip $cmddip $cmdspt $cmddpt $cmdproto";
     }
 
@@ -275,6 +276,7 @@ if ($err == 1) {
 
     // If we found gzip encoding, then switch to Bro transcript.
     if ($foundgzip==1) {
+	$cmdproto       = escapeshellarg($proto);
         $cmd = "../.scripts/cliscriptbro.tcl $cmdusr $cmdsensor $cmdst $cmdsid $cmdsip $cmddip $cmdspt $cmddpt $cmdproto";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Detected gzip encoding.</b></span>";
 	$fmtd .= "<span class=txtext_hdr>CAPME: <b>Automatically switched to Bro transcript.</b></span>";

@@ -64,3 +64,4 @@ securityonion-capme:-allow-start-time-to-go-back-50-years-in-callback.php-Securi
 securityonion-capme:-update-mysql-calls-Security-Onion-Solutionssecurity-onion#1479
 securityonion-capme:-update-mysql-calls-Security-Onion-Solutionssecurity-onion#1479-2
 update-callback.php
+add-cmdproto-to-callback.php
