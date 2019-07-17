@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion78) xenial; urgency=medium
+
+  * CapMe: support Elastic auth Security-Onion-Solutions/security-onion#1568 
+
+ -- Doug Burks <doug.burks@gmail.com>  Wed, 17 Jul 2019 19:30:53 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion77) xenial; urgency=medium
 
   * add cmdproto to callback.php 

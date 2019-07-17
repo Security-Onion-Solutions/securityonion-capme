@@ -105,6 +105,11 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
 curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+$elasticsearch_pcap="/etc/elasticsearch/elasticsearch_pcap";
+if (file_exists($elasticsearch_pcap)) {
+	include($elasticsearch_pcap);
+	curl_setopt($ch, CURLOPT_USERPWD, $elasticsearch_pcap_username . ":" . $elasticsearch_pcap_password);
+}
 
 $elastic_response = curl_exec($ch);
 curl_close($ch);
@@ -207,6 +212,11 @@ if ($sidsrc == "elastic") {
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+	$elasticsearch_pcap="/etc/elasticsearch/elasticsearch_pcap";
+	if (file_exists($elasticsearch_pcap)) {
+		include($elasticsearch_pcap);
+		curl_setopt($ch, CURLOPT_USERPWD, $elasticsearch_pcap_username . ":" . $elasticsearch_pcap_password);
+	}
 
 	$elastic_response = curl_exec($ch);
 	curl_close($ch);
