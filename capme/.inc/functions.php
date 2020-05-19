@@ -41,6 +41,10 @@ $s = 0;
 // Validate user input - id
 if (isset($_REQUEST['esid']))      {
                 $esid    = $_REQUEST['esid'];      $s++;
+		$aValid = array('-', '_');
+		if(!ctype_alnum(str_replace($aValid, '', $esid))) {
+		        invalid("Invalid Elastic ID.");
+		}
 		$parameters .= "&esid=" . $esid;
 }
 

@@ -66,3 +66,4 @@ securityonion-capme:-update-mysql-calls-Security-Onion-Solutionssecurity-onion#1
 update-callback.php
 add-cmdproto-to-callback.php
 CapMe:-support-Elastic-auth-Security-Onion-Solutionssecurity-onion#1568
+improve-input-validation

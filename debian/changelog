@@ -1,3 +1,9 @@
+securityonion-capme (20121213-0ubuntu0securityonion79) xenial; urgency=medium
+
+  * improve input validation 
+
+ -- Doug Burks <doug.burks@gmail.com>  Tue, 19 May 2020 11:10:56 -0400
+
 securityonion-capme (20121213-0ubuntu0securityonion78) xenial; urgency=medium
 
   * CapMe: support Elastic auth Security-Onion-Solutions/security-onion#1568 
