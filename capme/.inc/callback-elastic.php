@@ -72,7 +72,7 @@ function elastic_command($elastic_host, $elastic_port, $type, $bro_query, $st_es
 
 $ch = curl_init();
 $method = "GET";
-$url = "$elastic_host/*:logstash-*/_search?";
+$url = "$elastic_host/*:logstash-*/_search?rest_total_hits_as_int=true";
 $headers = ['Content-Type: application/json'];
 
 $query = 
